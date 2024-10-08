@@ -7,6 +7,7 @@ Maintainer: <xuzhen3039@stu.xjtu.edu.cn>
 Description: Confirmatory factor analysis based on GWAS summary statistics.
 Depends: R(>= 4.1.0)
 Imports: 
+    corpcor,
     data.table,
     doParallel,
     dplyr,
@@ -15,6 +16,7 @@ Imports:
     ieugwasr,
     kernlab,
     lavaan,
+    MASS,
     Matrix,
     parallel,
     pcalg,
