@@ -4,21 +4,18 @@
 #' @param files A list of file names, files must be located in the working directory, or a path must be provided.
 #' @param hm3 A file (UNZIPPED) of HAPMAP3 SNPs with some basic cleaning applied it is supplied and created by the original LD score regression developers and available here: https://data.broadinstitute.org/alkesgroup/LDSCORE/w_hm3.snplist.bz2
 #' @param trait.names A vector of trait names which will be used as names for the munged files
-#' @param N 
+#' @param N default to NULL
 #' @param info.filter Numeric value which is used as a lower bound for imputation quality (INFO)
 #' @param maf.filter Numeric value used as a lower bound for minor allele frequency
-#' @param log.name 
-#' @param column.names 
-#' @param parallel 
-#' @param cores 
-#' @param overwrite 
+#' @param log.name default to NULL
+#' @param column.names column.names is a list(SNP, A1, A2, effect, P, MAF, Z) to specify other name
+#' @param parallel default to FALSE
+#' @param cores default to NULL
+#' @param overwrite default to TRUE
 #'
-#' @return The function writes files of the ".sumstats" format, which can be used to estimate SNP heritability and genetic covariance using the ldsc() function. The function will also output a .log file that should be examined to ensure that column names are being interpret correctly.
+#' @return The function writes files of the ".sumstats.gz" format, which can be used to estimate SNP heritability and genetic covariance using the ldsc() function. The function will also output a .log file that should be examined to ensure that column names are being interpret correctly.
 #' @export
-#'
-#' @examples
-munge <- function(files,hm3,trait.names=NULL,N=NULL,info.filter = .9,maf.filter=0.01,log.name=NULL, column.names=list(),
-                  parallel=FALSE, cores=NULL, overwrite=TRUE){
+munge <- function(files,hm3,trait.names=NULL,N=NULL,info.filter = .9,maf.filter=0.01,log.name=NULL, column.names=list(), parallel=FALSE, cores=NULL, overwrite=TRUE){
   if (is.list(files)) {
     wrn <- paste0("DeprecationWarning: In future versions a list of filenames will no longer be accepted.\n",
                   "                    Please change files to a vector to ensure future compatibility.")
@@ -77,7 +74,7 @@ munge <- function(files,hm3,trait.names=NULL,N=NULL,info.filter = .9,maf.filter=
       .LOG("File(s) ", paste0(existing_files, collapse = ", "), " already exist and will be overwritten", file=log.file)
   }
   .LOG("Reading in reference file",file=log.file)
-  ref <- fread(hm3,header=T,data.table=F)
+  ref <- data.table::fread(hm3,header=T,data.table=F)
   if (!parallel) {
     .LOG("Reading summary statistics for ", paste(files,collapse=" "), ". Please note that this step usually takes a few minutes due to the size of summary statistic files.", file=log.file)
     ##note that fread is not used here due to formatting differences across summary statistic files
@@ -89,7 +86,7 @@ munge <- function(files,hm3,trait.names=NULL,N=NULL,info.filter = .9,maf.filter=
   } else {
     if(is.null(cores)){
     ##if no default provided use 1 less than the total number of cores available so your computer will still function
-      int <- detectCores() - 1
+      int <- parallel::detectCores() - 1
     }else{
       int <- cores
     }
@@ -99,16 +96,16 @@ munge <- function(files,hm3,trait.names=NULL,N=NULL,info.filter = .9,maf.filter=
     }
     # Defaulting to PSOCK cluster as it should work on both Linux and Windows,
     # and from my experience it's faster when not copying large ammounts of data
-    cl <- makeCluster(int, type="PSOCK")
-    registerDoParallel(cl)
-    on.exit(stopCluster(cl))
+    cl <- parallel::makeCluster(int, type="PSOCK")
+    doParallel::registerDoParallel(cl)
+    on.exit(parallel::stopCluster(cl))
     #Util-functions have to be explicitly passed to the analysis function in PSOCK cluster
     utilfuncs <- list()
     utilfuncs[[".get_renamed_colnames"]] <- .get_renamed_colnames
     utilfuncs[[".LOG"]] <- .LOG
     utilfuncs[["gzip"]] <- gzip
     .LOG("As parallel munging was requested, logs of each sumstats file will be saved separately",file=log.file)
-    foreach (i=1:length(filenames), .export=c(".munge_main"), .packages=c("stringr")) %dopar% {
+    foreach::foreach (i=1:length(filenames), .export=c(".munge_main"), .packages=c("stringr")) %dopar% {
       .munge_main(i, utilfuncs, NULL, filenames[i], trait.names[i], N[i], ref, hm3, info.filter, maf.filter, column.names, overwrite, NULL)
     }
   }

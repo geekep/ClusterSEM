@@ -8,22 +8,20 @@
 #' @param wld String which contains the path to the folder in which the LD score weights used in the analysis are located
 #' @param trait.names A character vector specifying how the traits should be named in the genetic covariance (S) matrix. These variable names can subsequently be used in later steps for model specification. If no value is provided, the function will automatically name the variables using the generic from of V1-VX.
 #' @param sep_weights Logical which indicates whether the weights are different form the LD scores used for the regression, defaults to FALSE.
-#' @param chr 
-#' @param n.blocks 
-#' @param ldsc.log 
-#' @param stand 
-#' @param select 
-#' @param chisq.max 
+#' @param chr defaults to 22
+#' @param n.blocks defaults to 200
+#' @param ldsc.log defaults to NULL
+#' @param stand default to FALSE
+#' @param select default to FALSE
+#' @param chisq.max default to NA
 #'
 #' @return The function returns a list with 5 named entries
 #' @return S  estimated genetic covariance matrix
 #' @return V  variance covariance matrix of the parameter estimates in S
 #' @return I  matrix containing the "cross trait intercepts", or the error covariance between traits induced by overlap, in terms of subjects, between the GWAS on which the analyses are based
-#' @return N  a vector containing the sample size (for the genetic variances) and the geometric mean of sample sizes (i.e. sqrt(N1,N2)) between two samples for the covariances
+#' @return N  a vector containing the sample size (for the genetic variances) and the geometric mean of sample sizes (i.e. sqrt(N1,N2)) between two samples for the covariance
 #' @return m  number of SNPs used to compute the LD scores
 #' @export
-#'
-#' @examples
 ldsc <- function(traits, sample.prev, population.prev, ld, wld,
                 trait.names = NULL, sep_weights = FALSE, chr = 22,
                 n.blocks = 200, ldsc.log = NULL, stand = FALSE,select=FALSE,chisq.max = NA) {
@@ -65,7 +63,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
   }
 
   if(!(is.null(trait.names))){
-    check_names<-str_detect(trait.names, "-")
+    check_names<-stringr::str_detect(trait.names, "-")
     if(any(check_names))
       warning("Your trait names specified include mathematical arguments (e.g., + or -) that will be misread by lavaan. Please rename the traits using the trait.names argument.")
   }
@@ -87,7 +85,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
 
   if(select == FALSE){
   x <- do.call("rbind", lapply(1:chr, function(i) {
-    suppressMessages(read_delim(
+    suppressMessages(readr::read_delim(
       file.path(ld, paste0(i, ".l2.ldscore.gz")),
       delim = "\t", escape_double = FALSE, trim_ws = TRUE, progress = FALSE))
   }))
@@ -95,7 +93,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
 
   if(select == "ODD"){
     x <- do.call("rbind", lapply(odd, function(i) {
-      suppressMessages(read_delim(
+      suppressMessages(readr::read_delim(
         file.path(ld, paste0(i, ".l2.ldscore.gz")),
         delim = "\t", escape_double = FALSE, trim_ws = TRUE, progress = FALSE))
     }))
@@ -103,7 +101,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
 
   if(select == "EVEN"){
     x <- do.call("rbind", lapply(even, function(i) {
-      suppressMessages(read_delim(
+      suppressMessages(readr::read_delim(
         file.path(ld, paste0(i, ".l2.ldscore.gz")),
         delim = "\t", escape_double = FALSE, trim_ws = TRUE, progress = FALSE))
     }))
@@ -111,7 +109,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
 
   if(is.numeric(select)){
     x <- do.call("rbind", lapply(select, function(i) {
-      suppressMessages(read_delim(
+      suppressMessages(readr::read_delim(
         file.path(ld, paste0(i, ".l2.ldscore.gz")),
         delim = "\t", escape_double = FALSE, trim_ws = TRUE, progress = FALSE))
     }))
@@ -126,28 +124,28 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
   if(sep_weights){
     if(select == FALSE){
     w <- do.call("rbind", lapply(1:chr, function(i) {
-      suppressMessages(read_delim(
+      suppressMessages(readr::read_delim(
         file.path(wld, paste0(i, ".l2.ldscore.gz")),
         delim = "\t", escape_double = FALSE, trim_ws = TRUE, progress = FALSE))
     }))
     }
     if(select == "EVEN"){
       w <- do.call("rbind", lapply(even, function(i) {
-        suppressMessages(read_delim(
+        suppressMessages(readr::read_delim(
           file.path(wld, paste0(i, ".l2.ldscore.gz")),
           delim = "\t", escape_double = FALSE, trim_ws = TRUE, progress = FALSE))
       }))
     }
     if(select == "ODD"){
       w <- do.call("rbind", lapply(odd, function(i) {
-        suppressMessages(read_delim(
+        suppressMessages(readr::read_delim(
           file.path(wld, paste0(i, ".l2.ldscore.gz")),
           delim = "\t", escape_double = FALSE, trim_ws = TRUE, progress = FALSE))
       }))
     }
       if(is.numeric(select)){
         w <- do.call("rbind", lapply(select, function(i) {
-          suppressMessages(read_delim(
+          suppressMessages(readr::read_delim(
             file.path(wld, paste0(i, ".l2.ldscore.gz")),
             delim = "\t", escape_double = FALSE, trim_ws = TRUE, progress = FALSE))
         }))
@@ -163,25 +161,25 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
 
   if(select == FALSE){
   m <- do.call("rbind", lapply(1:chr, function(i) {
-    suppressMessages(read_csv(file.path(ld, paste0(i, ".l2.M_5_50")), col_names = FALSE))
+    suppressMessages(readr::read_csv(file.path(ld, paste0(i, ".l2.M_5_50")), col_names = FALSE))
   }))
   }
 
   if(select == "EVEN"){
     m <- do.call("rbind", lapply(even, function(i) {
-      suppressMessages(read_csv(file.path(ld, paste0(i, ".l2.M_5_50")), col_names = FALSE))
+      suppressMessages(readr::read_csv(file.path(ld, paste0(i, ".l2.M_5_50")), col_names = FALSE))
     }))
   }
 
   if(select == "ODD"){
     m <- do.call("rbind", lapply(odd, function(i) {
-      suppressMessages(read_csv(file.path(ld, paste0(i, ".l2.M_5_50")), col_names = FALSE))
+      suppressMessages(readr::read_csv(file.path(ld, paste0(i, ".l2.M_5_50")), col_names = FALSE))
     }))
   }
 
   if(is.numeric(select)){
     m <- do.call("rbind", lapply(select, function(i) {
-      suppressMessages(read_csv(file.path(ld, paste0(i, ".l2.M_5_50")), col_names = FALSE))
+      suppressMessages(readr::read_csv(file.path(ld, paste0(i, ".l2.M_5_50")), col_names = FALSE))
     }))
   }
 
@@ -194,7 +192,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
   all_y <- lapply(traits, function(chi1) {
 
     ## READ chi2
-    y1 <- suppressMessages(na.omit(read_delim(
+    y1 <- suppressMessages(na.omit(readr::read_delim(
       chi1, delim = "\t", escape_double = FALSE, trim_ws = TRUE, progress = FALSE)))
 
     .LOG("Read in summary statistics [", s <<- s + 1, "/", n.traits, "] from: ", chi1, file=log.file)

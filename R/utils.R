@@ -95,7 +95,7 @@ If the Neff value is halved in the summary stats, but not recognized by the mung
 #names is a vector of variable names in the order you used
 .rearrange <- function (k, fit, names) {
     order1 <- names
-    order2 <- rownames(inspect(fit)[[1]]) #order of variables
+    order2 <- rownames(lavaan::inspect(fit)[[1]]) #order of variables
     kst <- k*(k+1)/2
     covA <- matrix(NA, k, k)
     covA[lower.tri(covA, diag = TRUE)] <- 1:kst
@@ -104,7 +104,7 @@ If the Neff value is halved in the summary stats, but not recognized by the mung
     colnames(covA) <- rownames(covA) <- order1 #give A actual variable order from lavaan output
     #reorder A by order2
     covA <- covA[order2, order2] #rearrange rows/columns
-    vec2 <- lav_matrix_vech(covA) #grab new vectorized order
+    vec2 <- lavaan::lav_matrix_vech(covA) #grab new vectorized order
     return(vec2)
 }
 
@@ -175,8 +175,7 @@ If the Neff value is halved in the summary stats, but not recognized by the mung
     return(V_SNP)
 }
 
-         
-.get_S_Full<-function(n_phenotypes,S_LD,varSNP,beta_SNP,TWAS,i){
+.get_S_Full<-function(n_phenotypes, S_LD, varSNP, beta_SNP, TWAS, i){
   #create empty vector for S_SNP
   S_SNP <- vector(mode="numeric",length=n_phenotypes+1)
 
@@ -210,7 +209,6 @@ rownames(S_Full) <- colnames(S_Full)
 
 return(S_Full)
 }
-
 
 .get_Z_pre <- function(i, beta_SNP, SE_SNP, I_LD, GC) {
     if(GC == "conserv"){

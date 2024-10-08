@@ -4,14 +4,28 @@ Title: Confirmatory factor analysis based on GWAS summary statistics
 Version: 1.0
 Author: Zhen Xu
 Maintainer: <xuzhen3039@stu.xjtu.edu.cn>
-Description: Confirmatory factor analysis based on GWAS summary statistics
+Description: Confirmatory factor analysis based on GWAS summary statistics.
 Depends: R(>= 4.1.0)
 Imports: 
+    data.table,
+    doParallel,
+    dplyr,
+    foreach,
+    gdata,
+    ieugwasr,
     kernlab,
     lavaan,
     Matrix,
+    parallel,
     pcalg,
-    pheatmap
+    pheatmap,
+    plyr,
+    R.utils,
+    readr,
+    stats,
+    stringr,
+    TwoSampleMR,
+    utils
 License: GPL (>= 3)
 LazyData: yes
 ByteCompile: true

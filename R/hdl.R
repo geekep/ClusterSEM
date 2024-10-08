@@ -13,9 +13,9 @@
 #' @return  S	estimated genetic covariance matrix
 #' @return  V	variance covariance matrix of the parameter estimates in S
 #' @return  I  matrix containing the "cross trait intercepts", or the error covariance between traits induced by overlap, in terms of subjects, between the GWAS on which the analyses are based
+#' 
 #' @export
 #'
-#' @examples
 #' @references Ning, Z., Pawitan, Y. & Shen, X. High-definition likelihood inference of genetic correlations across human complex traits. Nat Genet (2020).
 hdl <- function(traits,sample.prev=NA,population.prev=NA,trait.names=NULL,LD.path,Nref = 335265,method="piecewise"){
 
@@ -54,7 +54,7 @@ hdl <- function(traits,sample.prev=NA,population.prev=NA,trait.names=NULL,LD.pat
   n.V <- (n.traits^2 / 2) + .5*n.traits
   
   if(!(is.null(trait.names))){
-    check_names<-str_detect(trait.names, "-")
+    check_names<-stringr::str_detect(trait.names, "-")
     if(any(check_names==TRUE)){warning("Your trait names specified include mathematical arguments (e.g., + or -) that will be misread by lavaan. Please rename the traits using the trait.names argument.")}
   }
   
@@ -71,7 +71,7 @@ hdl <- function(traits,sample.prev=NA,population.prev=NA,trait.names=NULL,LD.pat
 # Start with general utility functions needed for hdl and standard errors
 
 
-#### Define the liklihood funcrion to be optimized for h2:
+#### Define the likelihood function to be optimized for h2:
 
 
 llfun <-  function(param, N, M,Nref=1000, lam, bstar, lim=exp(-10)){
@@ -83,7 +83,7 @@ llfun <-  function(param, N, M,Nref=1000, lam, bstar, lim=exp(-10)){
     return(ll)
   }
 
-#### Define the liklihood funcrion to be optimized for genetic covariance:
+#### Define the likelihood function to be optimized for genetic covariance:
 
 llfun.gcov.part.2 <- function(param, h11, h22, rho12, M, N1, N2, N0, Nref, lam0, lam1, lam2, bstar1, bstar2, lim=exp(-10)){
   h12 <- param[1]
@@ -109,13 +109,13 @@ llfun.gcov.part.2 <- function(param, h11, h22, rho12, M, N1, N2, N0, Nref, lam0,
 
 ################# Begin the loop to compute S and V cell by cell using HDL
 
-s<-1 # coubnt for elements in V
+s<-1 # count for elements in V
 for(j in 1:n.traits){
   for(d in j:n.traits){
 cat("\n")
   if(j == d){
     chi1 <- traits[j]
-    gwas.df <- as.data.frame(suppressMessages(read_delim(chi1, "\t", escape_double = FALSE, trim_ws = TRUE,progress = F)))
+    gwas.df <- as.data.frame(suppressMessages(readr::read_delim(chi1, "\t", escape_double = FALSE, trim_ws = TRUE,progress = F)))
     
     gwas.df <- gwas.df %>% filter(SNP %in% snps.name.list)
     gwas.df$A1 <- as.character(gwas.df$A1)
@@ -177,7 +177,7 @@ cat("\n")
         reg <- lm(a11 ~ LDsc)
         h11.ols <- c(summary(reg)$coef[1:2, 1:2] * c(N1,  M))
         h11v <- (h11.ols[2] * LDsc/M + 1/N1)^2
-        reg <- lm(a11 ~ LDsc, weight = 1/h11v)
+        reg <- lm(a11 ~ LDsc, weights = 1/h11v)
         h11.wls <- c(summary(reg)$coef[1:2, 1:2] * c(N1,  M))
         bstar1 <- crossprod(V, bhat1)
         opt <- optim(c(h11.wls[2], 1), llfun, N = N1, Nref = Nref,
@@ -258,8 +258,8 @@ cat("\n")
   if (j != d){  
   chi1 <- traits[j]
   chi2 <- traits[d]
-  gwas1.df <- as.data.frame(suppressMessages(read_delim(chi1, "\t", escape_double = FALSE, trim_ws = TRUE,progress = F)))
-  gwas2.df <- as.data.frame(suppressMessages(read_delim(chi2, "\t", escape_double = FALSE, trim_ws = TRUE,progress = F)))
+  gwas1.df <- as.data.frame(suppressMessages(readr::read_delim(chi1, "\t", escape_double = FALSE, trim_ws = TRUE,progress = F)))
+  gwas2.df <- as.data.frame(suppressMessages(readr::read_delim(chi2, "\t", escape_double = FALSE, trim_ws = TRUE,progress = F)))
 
   gwas1.df <- gwas1.df %>% filter(SNP %in% snps.name.list)
   gwas2.df <- gwas2.df %>% filter(SNP %in% snps.name.list)
@@ -297,7 +297,7 @@ cat("\n")
   N <- sqrt(N1) * sqrt(N2)
   p1 <- N0/N1
   p2 <- N0/N2
-  rho12 <- suppressWarnings(inner_join(gwas1.df , gwas2.df , by = "SNP") %>% summarise(x = cor(Z.x, Z.y, use = "complete.obs")) %>% unlist)
+  rho12 <- suppressWarnings(dplyr::inner_join(gwas1.df , gwas2.df , by = "SNP") %>% dplyr::summarise(x = cor(Z.x, Z.y, use = "complete.obs")) %>% unlist)
   bstar1.v <- bstar2.v <- lam.v <- list()
   HDL11.df <- HDL12.df <- HDL22.df <- names.row <- NULL
   counter <- 0
@@ -347,15 +347,15 @@ cat("\n")
         h12.ols <- c(summary(reg)$coef[1:2, 1:2] * c(N, M))
       h11v <- (h11.ols[2] * LDsc/M + 1/N1)^2
       h22v <- (h22.ols[2] * LDsc/M + 1/N2)^2
-      reg <- lm(a11 ~ LDsc, weight = 1/h11v)
+      reg <- lm(a11 ~ LDsc, weights = 1/h11v)
       h11.wls <- c(summary(reg)$coef[1:2, 1:2] * c(N1, M))
-      reg <- lm(a22 ~ LDsc, weight = 1/h22v)
+      reg <- lm(a22 ~ LDsc, weights = 1/h22v)
       h22.wls <- c(summary(reg)$coef[1:2, 1:2] * c(N2,M))
       if (N0 > 0) 
         h12v <- sqrt(h11v * h22v) + (h12.ols[2] * LDsc/M + p1 * p2 * rho12/N0)^2
       if (N0 == 0) 
         h12v <- sqrt(h11v * h22v) + (h12.ols[2] * LDsc/M)^2
-      reg <- lm(a12 ~ LDsc, weight = 1/h12v)
+      reg <- lm(a12 ~ LDsc, weights = 1/h12v)
       if (N0 > 0) 
         h12.wls <- c(summary(reg)$coef[1:2, 1:2] * c((N0/p1/p2), M))
       if (N0 == 0) 
@@ -520,7 +520,7 @@ S2 <- S
 S <- diag(as.vector(sqrt(Liab.S))) %*% S %*% diag(as.vector(sqrt(Liab.S)))
 
 #calculate the ratio of the rescaled and original S matrices
-scaleO <- as.vector(lowerTriangle((S/S2), diag=T))
+scaleO <- as.vector(gdata::lowerTriangle((S/S2), diag=T))
 
 #obtain diagonals of the original V matrix and take their sqrt to get SE's
 Dvcov<-sqrt(diag(V))

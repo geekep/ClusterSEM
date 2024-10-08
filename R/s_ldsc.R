@@ -1,5 +1,6 @@
 #' Estimate genetic covariance structure within functional annotations using multivariate Stratified LD score regression
 #' @description Function to run Stratified LD score regression
+#' 
 #' @param traits A vector of file names which point to  LDSC munged files for trait you want to include
 #' @param sample.prev A vector of sample prevalence for dichotomous traits and \code{NA} for continuous traits. Default = NULL.
 #' @param population.prev A vector of population prevalence for dichotomous traits and \code{NA} for continuous traits. Default = NULL.
@@ -19,8 +20,6 @@
 #' @return I  matrix containing the "cross trait intercepts", or the error covariance between traits induced by overlap, in terms of subjects, between the GWAS on which the analyses are based
 #' @return N  a vector containing the sample size (for the genetic variances) and the geometric mean of sample sizes (i.e. sqrt(N1,N2)) between two samples for the covariance
 #' @export
-#'
-#' @examples
 s_ldsc <- function(traits,sample.prev=NULL,population.prev=NULL,ld,wld,frq,trait.names=NULL,n.blocks=200,ldsc.log=NULL,exclude_cont=TRUE){
   
   if(is.null(ldsc.log)){
@@ -83,48 +82,48 @@ s_ldsc <- function(traits,sample.prev=NULL,population.prev=NULL,ld,wld,frq,trait
   if(Operating == "Darwin"){
     readLdFunc <- function(LD.in){
       if(substr(x=LD.in,start=nchar(LD.in)-1,stop=nchar(LD.in))=="gz"){
-        dum <- fread(input=paste("gzcat", LD.in), header=T, showProgress=F, data.table=F)
+        dum <- data.table::fread(input=paste("gzcat", LD.in), header=T, showProgress=F, data.table=F)
       }else{
-        dum <- fread(input=LD.in, header=T, showProgress=F, data.table=F)
+        dum <- data.table::fread(input=LD.in, header=T, showProgress=F, data.table=F)
       }
     }}
   
   if(Operating == "Linux"){
     readLdFunc <- function(LD.in){
       if(substr(x=LD.in,start=nchar(LD.in)-1,stop=nchar(LD.in))=="gz"){
-        dum <- fread(input=paste("zcat", LD.in), header=T, showProgress=F, data.table=F)
+        dum <- data.table::fread(input=paste("zcat", LD.in), header=T, showProgress=F, data.table=F)
       }else{
-        dum <- fread(input=LD.in, header=T, showProgress=F, data.table=F)
+        dum <- data.table::fread(input=LD.in, header=T, showProgress=F, data.table=F)
       } 
     }}
   
   
   if(Operating == "Windows"){
     readLdFunc <- function(LD.in){
-      dum <- fread(input=LD.in, header=T, showProgress=F, data.table=F)
+      dum <- data.table::fread(input=LD.in, header=T, showProgress=F, data.table=F)
     }
   }
   
-  x <- suppressMessages(ldply(.data=x.files,.fun=readLdFunc))
+  x <- suppressMessages(plyr::ldply(.data=x.files,.fun=readLdFunc))
   x$CM <- NULL
   x$MAF <- NULL
   
   ##read in the M_5_50 files (number of SNPs in annotation by chromosome)
   m.files <- sort(Sys.glob(paste0(ld1,"*M_5_50")))
   readMFunc <- function(x){dum <- read.table(file=x, header=F)}
-  m <- ldply(.data=m.files,.fun=readMFunc)
+  m <- plyr::ldply(.data=m.files,.fun=readMFunc)
   
   ##read in additional annotations on top of baseline if relevant
   if(!is.null(ld2)){
     for(i in 1:length(ld2)){
       .LOG("Reading in LD scores from ",paste0(ld2[i],".[1-22]"),"\n", file=log.file)
       extra.x.files <- sort(Sys.glob(paste0(ld2[i],"*l2.ldscore*")))
-      extra.ldscore <- suppressMessages(ldply(.data=extra.x.files,.fun=readLdFunc))
+      extra.ldscore <- suppressMessages(plyr::ldply(.data=extra.x.files,.fun=readLdFunc))
       extra.ldscore$CHR <- NULL
       extra.ldscore$BP <- NULL
       if(ncol(extra.ldscore)==2){colnames(extra.ldscore)[2] <- c(ld2[i])}
       extra.m.files <- sort(Sys.glob(paste0(ld2[i],"*M_5_50")))
-      extra.m <- suppressMessages(ldply(.data=extra.m.files,.fun=readMFunc))
+      extra.m <- suppressMessages(plyr::ldply(.data=extra.m.files,.fun=readMFunc))
       if(identical(as.character(x$SNP),as.character(extra.ldscore$SNP))==T){
         colnames.x <- colnames(x)
         colnames.extra.ldscore <- colnames(extra.ldscore)[2:ncol(extra.ldscore)]
@@ -164,7 +163,7 @@ s_ldsc <- function(traits,sample.prev=NULL,population.prev=NULL,ld,wld,frq,trait
   
   
   w.files <- sort(Sys.glob(paste0(wld,"*l2.ldscor*")))
-  w <- suppressMessages(ldply(w.files,readLdFunc))
+  w <- suppressMessages(plyr::ldply(w.files,readLdFunc))
   w$CM <- NULL
   w$MAF <- NULL
   colnames(w)[ncol(w)] <- "wLD"
@@ -192,25 +191,25 @@ s_ldsc <- function(traits,sample.prev=NULL,population.prev=NULL,ld,wld,frq,trait
   .LOG("Reading in annotation files. This step may take a few minutes.", file=log.file)
   
   for(i in 1:length(annot.files)){
-    header <- suppressMessages(read.table(annot.files[i], header = TRUE, nrow = 1))
+    header <- suppressMessages(utils::read.table(annot.files[i], header = TRUE, nrows = 1))
     if(Operating == "Darwin"){
-      annot <- suppressMessages(fread(input=paste("gzcat",annot.files[i]),skip=1,header=FALSE,showProgress=F,data.table=F))}
+      annot <- suppressMessages(data.table::fread(input=paste("gzcat",annot.files[i]),skip=1,header=FALSE,showProgress=F,data.table=F))}
     if(Operating == "Windows"){
-      annot <- suppressMessages(fread(input=paste(annot.files[i]),skip=1,header=FALSE,showProgress=F,data.table=F))}
+      annot <- suppressMessages(data.table::fread(input=paste(annot.files[i]),skip=1,header=FALSE,showProgress=F,data.table=F))}
     if(Operating == "Linux"){
-      annot <- suppressMessages(fread(input=paste("zcat",annot.files[i]),skip=1,header=FALSE,showProgress=F,data.table=F))
+      annot <- suppressMessages(data.table::fread(input=paste("zcat",annot.files[i]),skip=1,header=FALSE,showProgress=F,data.table=F))
     }
-    setnames(annot, colnames(header))
+    data.table::setnames(annot, colnames(header))
     annot$CM <- NULL
     if(is.null(ld2)==F){
       for(j in 1:length(ld2)){
         extra.annot.files <- sort(Sys.glob(paste0(ld2[j],"*annot.gz")))
         if(Operating == "Darwin"){
-          extra.annot <- suppressMessages(fread(input=paste("gzcat",extra.annot.files[i]),header=T,showProgress=F,data.table=F))}
+          extra.annot <- suppressMessages(data.table::fread(input=paste("gzcat",extra.annot.files[i]),header=T,showProgress=F,data.table=F))}
         if(Operating == "Windows"){
-          extra.annot <- suppressMessages(fread(input=paste(extra.annot.files[i]),header=T,showProgress=F,data.table=F))}
+          extra.annot <- suppressMessages(data.table::fread(input=paste(extra.annot.files[i]),header=T,showProgress=F,data.table=F))}
         if(Operating == "Linux"){
-          extra.annot <- suppressMessages(fread(input=paste("zcat",extra.annot.files[i]),header=T,showProgress=F,data.table=F)) 
+          extra.annot <- suppressMessages(data.table::fread(input=paste("zcat",extra.annot.files[i]),header=T,showProgress=F,data.table=F)) 
         }
         extra.annot$CHR <- NULL
         extra.annot$BP <- NULL
@@ -231,7 +230,7 @@ s_ldsc <- function(traits,sample.prev=NULL,population.prev=NULL,ld,wld,frq,trait
       }
     }
     
-    frq <- fread(input=frq.files[i],header=T,showProgress=F,data.table=F)
+    frq <- data.table::fread(input=frq.files[i],header=T,showProgress=F,data.table=F)
     
     frq <- frq[frq$MAF > 0.05 & frq$MAF < 0.95,]
     selected.annot <- merge(x=frq[,c("SNP","MAF")],y=annot,by="SNP")
@@ -318,14 +317,14 @@ s_ldsc <- function(traits,sample.prev=NULL,population.prev=NULL,ld,wld,frq,trait
     ## READ chi2
     if(substr(x=chi1,start=nchar(chi1)-1,stop=nchar(chi1))=="gz"){
       if(Operating == "Darwin"){
-        y1 <- suppressMessages(na.omit(fread(paste("gzcat",chi1),header=T,showProgress=F,data.table=F)))}
+        y1 <- suppressMessages(na.omit(data.table::fread(paste("gzcat",chi1),header=T,showProgress=F,data.table=F)))}
       if(Operating == "Windows"){
-        y1 <- suppressMessages(na.omit(fread(paste(chi1),header=T,showProgress=F,data.table=F)))}
+        y1 <- suppressMessages(na.omit(data.table::fread(paste(chi1),header=T,showProgress=F,data.table=F)))}
       if(Operating == "Linux"){
-        y1 <- suppressMessages(na.omit(fread(paste("zcat",chi1),header=T,showProgress=F,data.table=F)))
+        y1 <- suppressMessages(na.omit(data.table::fread(paste("zcat",chi1),header=T,showProgress=F,data.table=F)))
       }
     }else{
-      y1 <- suppressMessages(na.omit(fread(chi1,header=T,showProgress=F,data.table=F)))
+      y1 <- suppressMessages(na.omit(data.table::fread(chi1,header=T,showProgress=F,data.table=F)))
     }
     
     .LOG("Read in summary statistics [", s <<- s + 1, "/", n.traits, "] from: ", chi1, file=log.file)
@@ -789,10 +788,10 @@ s_ldsc <- function(traits,sample.prev=NULL,population.prev=NULL,ld,wld,frq,trait
     S_Tau[[f]]<-diag(as.vector(sqrt(Liab.S))) %*% Tau_List[[f]] %*% diag(as.vector(sqrt(Liab.S)))
     
     #calculate the ratio of the rescaled and original S matrices
-    scaleO <- as.vector(lowerTriangle((S[[f]]/S_List[[f]]), diag=T))
+    scaleO <- as.vector(gdata::lowerTriangle((S[[f]]/S_List[[f]]), diag=T))
     
     #calculate the ratio of the rescaled and original S_Tau matrices
-    scaleO_Tau <- as.vector(lowerTriangle((S_Tau[[f]]/Tau_List[[f]]), diag=T))
+    scaleO_Tau <- as.vector(gdata::lowerTriangle((S_Tau[[f]]/Tau_List[[f]]), diag=T))
     
     #obtain diagonals of the original V matrix and take their sqrt to get SE's
     Dvcov<-sqrt(diag(v.out[[f]]))

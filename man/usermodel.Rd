@@ -28,9 +28,9 @@ usermodel(
 
 \item{imp_cov}{Optional argument to denote whether the user wants the model-implied and residual covariance matrix included in the usermodel output (default = FALSE)}
 
-\item{fix_resid}{}
+\item{fix_resid}{default to TRUE}
 
-\item{toler}{}
+\item{toler}{default to NULL}
 }
 \value{
 The function estimates a user-specified model, along with model fit indices.

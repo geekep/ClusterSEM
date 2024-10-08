@@ -7,17 +7,15 @@
 #' @param CFIcalc Optional argument to denote whether CFI is requested (default = TRUE). In some cases the estimation of the independent (i.e., Null) model for calculation of CFI can be time consuming. If the function seems to be stuck on this step, we would suggest re-running with this option set to FALSE
 #' @param std.lv Optional argument to denote whether all latent variables are standardized using unit variance identification (default = FALSE)
 #' @param imp_cov Optional argument to denote whether the user wants the model-implied and residual covariance matrix included in the usermodel output (default = FALSE)
-#' @param fix_resid 
-#' @param toler 
+#' @param fix_resid default to TRUE
+#' @param toler default to NULL
 #'
 #' @return The function estimates a user-specified model, along with model fit indices.
 #' @export
-#'
-#' @examples
 usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.lv=FALSE, imp_cov=FALSE,fix_resid=TRUE,toler=NULL){ 
   time<-proc.time()
   ##determine if the model is likely being listed in quotes and print warning if so
-  test<-c(str_detect(model, "~"),str_detect(model, "="),str_detect(model, "\\+"))
+  test<-c(stringr::str_detect(model, "~"),stringr::str_detect(model, "="),stringr::str_detect(model, "\\+"))
   if(any(test) != TRUE){
     warning("Your model name may be listed in quotes; please remove the quotes and try re-running if the function has returned an error about not locating the ReorderModel.")
   }
@@ -80,11 +78,11 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
   
   ##smooth to near positive definite if either V or S are non-positive definite
   S_LDb<-S_LD
-  smooth1<-ifelse(eigen(S_LD)$values[nrow(S_LD)] <= 0, S_LD<-as.matrix((nearPD(S_LD, corr = FALSE))$mat), S_LD<-S_LD)
+  smooth1<-ifelse(eigen(S_LD)$values[nrow(S_LD)] <= 0, S_LD<-as.matrix((Matrix::nearPD(S_LD, corr = FALSE))$mat), S_LD<-S_LD)
   LD_sdiff<-max(abs(S_LD-S_LDb))
   
   V_LDb<-V_LD
-  smooth2<-ifelse(eigen(V_LD)$values[nrow(V_LD)] <= 0, V_LD<-as.matrix((nearPD(V_LD, corr = FALSE))$mat), V_LD<-V_LD)
+  smooth2<-ifelse(eigen(V_LD)$values[nrow(V_LD)] <= 0, V_LD<-as.matrix((Matrix::nearPD(V_LD, corr = FALSE))$mat), V_LD<-V_LD)
   LD_sdiff2<-max(abs(V_LD-V_LDb))
   
   SE_pre<-matrix(0, k, k)
@@ -155,7 +153,7 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
     modelCFI<-write.null(k)
     
     ##run CFI model so it knows the reordering for the independence model
-    empty<-.tryCatch.W.E(fitCFI <- sem(modelCFI, sample.cov = S_LD, estimator = "DWLS", WLS.V = W,sample.nobs=2, optim.dx.tol = .01,optim.force.converged=TRUE,control=list(iter.max=1)))
+    empty<-.tryCatch.W.E(fitCFI <- lavaan::sem(modelCFI, sample.cov = S_LD, estimator = "DWLS", WLS.V = W,sample.nobs=2, optim.dx.tol = .01,optim.force.converged=TRUE,control=list(iter.max=1)))
     
     orderCFI <- .rearrange(k = k, fit =  fitCFI, names =  rownames(S_LD))
     
@@ -167,9 +165,9 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
     
   }
   
-  empty3<-.tryCatch.W.E(ReorderModel <- sem(Model1, sample.cov = S_LD, estimator = "DWLS", WLS.V = W, sample.nobs = 2,warn=FALSE,std.lv=std.lv, optim.dx.tol = .01,optim.force.converged=TRUE,control=list(iter.max=1)))
+  empty3<-.tryCatch.W.E(ReorderModel <- lavaan::sem(Model1, sample.cov = S_LD, estimator = "DWLS", WLS.V = W, sample.nobs = 2,warn=FALSE,std.lv=std.lv, optim.dx.tol = .01,optim.force.converged=TRUE,control=list(iter.max=1)))
   
-  r<-nrow(lavInspect(ReorderModel, "cor.lv"))
+  r<-nrow(lavaan::inspect(ReorderModel, "cor.lv"))
   
   if(class(empty3$value) != "lavaan"){
     warning(paste("The function has stopped due to convergence issues for your primary model. Please contact us with your specific model and variables used or try specifying an alternative model"))
@@ -188,17 +186,17 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
   
   if(estimation == "DWLS"){
     ##run the model. save failed runs and run model. warning and error functions prevent loop from breaking if there is an error. 
-    empty4<-.tryCatch.W.E(Model1_Results <- sem(Model1, sample.cov = S_LD, estimator = "DWLS", std.lv=std.lv,WLS.V = W_Reorder, sample.nobs = 2,optim.dx.tol = .01))
+    empty4<-.tryCatch.W.E(Model1_Results <- lavaan::sem(Model1, sample.cov = S_LD, estimator = "DWLS", std.lv=std.lv,WLS.V = W_Reorder, sample.nobs = 2,optim.dx.tol = .01))
   }
   
   if(estimation == "ML"){
-    empty4<-.tryCatch.W.E(Model1_Results <- sem(Model1, sample.cov = S_LD, estimator = "ML", sample.nobs = 200,std.lv=std.lv, optim.dx.tol = .01,sample.cov.rescale=FALSE))
+    empty4<-.tryCatch.W.E(Model1_Results <- lavaan::sem(Model1, sample.cov = S_LD, estimator = "ML", sample.nobs = 200,std.lv=std.lv, optim.dx.tol = .01,sample.cov.rescale=FALSE))
   }
   
   empty4$warning$message[1]<-ifelse(is.null(empty4$warning$message), empty4$warning$message[1]<-0, empty4$warning$message[1])
   
   if(fix_resid == TRUE){
-    if(class(empty4$value)[1] == "simpleError" | lavInspect(Model1_Results,"converged") == FALSE){
+    if(class(empty4$value)[1] == "simpleError" | lavaan::inspect(Model1_Results,"converged") == FALSE){
       
       #create unique combination of letters for residual variance parameter labels
       n<-combn(letters,4)[,sample(1:14000, k, replace=FALSE)]
@@ -212,11 +210,11 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
       Model1<-paste(Model1,Model3)
       
       if(estimation == "DWLS"){
-        empty4<-.tryCatch.W.E(Model1_Results <- sem(Model1, sample.cov = S_LD, estimator = "DWLS",std.lv=std.lv, WLS.V = W_Reorder, sample.nobs = 2, optim.dx.tol = .01))
+        empty4<-.tryCatch.W.E(Model1_Results <- lavaan::sem(Model1, sample.cov = S_LD, estimator = "DWLS",std.lv=std.lv, WLS.V = W_Reorder, sample.nobs = 2, optim.dx.tol = .01))
       }
       
       if(estimation == "ML"){
-        empty4<-.tryCatch.W.E(Model1_Results <- sem(Model1, sample.cov = S_LD, estimator = "ML", std.lv=std.lv, sample.nobs = 200,optim.dx.tol = .01,sample.cov.rescale=FALSE))
+        empty4<-.tryCatch.W.E(Model1_Results <- lavaan::sem(Model1, sample.cov = S_LD, estimator = "ML", std.lv=std.lv, sample.nobs = 200,optim.dx.tol = .01,sample.cov.rescale=FALSE))
       }
       
       #if adding in residuals fixed above 0 is duplicating user provided arguments then revert to original model
@@ -236,16 +234,16 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
   #pull the delta matrix (this doesn't depend on N)
   ##note that while the delta matrix is reordered based on the ordering in the model specification
   ##that the lavaan output is also reordered so that this actually ensures that the results match up 
-  S2.delt <- lavInspect(Model1_Results, "delta")
+  S2.delt <- lavaan::inspect(Model1_Results, "delta")
   
   ##weight matrix from stage 2. S2.W is not reordered by including something like model constraints
-  S2.W <- lavInspect(Model1_Results, "WLS.V") 
+  S2.W <- lavaan::inspect(Model1_Results, "WLS.V") 
   
   #the "bread" part of the sandwich is the naive covariance matrix of parameter estimates that would only be correct if the fit function were correctly specified
   bread2<-.tryCatch.W.E(bread <- solve(t(S2.delt)%*%S2.W%*%S2.delt,tol=toler))
   
   if(!(is.null(empty4$warning))){
-    if(lavInspect(Model1_Results,"converged") == FALSE){
+    if(lavaan::inspect(Model1_Results,"converged") == FALSE){
       warning("The model failed to converge on a solution. Please try specifying an alternative model.")
     }}
   
@@ -254,7 +252,7 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
             The model output is also printed below (without standard errors) in case this is helpful for troubleshooting. Please note
             that these results should not be interpreted.")
     check<-1
-    unstand<-data.frame(inspect(Model1_Results, "list")[,c("lhs","op","rhs","free","est")])
+    unstand<-data.frame(lavaan::inspect(Model1_Results, "list")[,c("lhs","op","rhs","free","est")])
     unstand<-subset(unstand, unstand$free != 0)                    
     unstand$free<-NULL
     results<-unstand
@@ -273,7 +271,7 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
     #the lettuce plus inner "meat" (V) of the sandwich adjusts the naive covariance matrix by using the correct sampling covariance matrix of the observed covariance matrix in the computation
     SE <- as.matrix(sqrt(diag(Ohtt)))
     
-    Model_Output <- parTable(Model1_Results)
+    Model_Output <- lavaan::parTable(Model1_Results)
     
     constraints<-subset(Model_Output$label, Model_Output$label != "")
     constraints2<-duplicated(constraints)
@@ -282,7 +280,7 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
     if(estimation == "DWLS"){
       if(":=" %in% Model_Output$op & !(is.na(SE[1]))){
         #variance-covariance matrix of parameter estimates, q-by-q (this is the naive one)
-        vcov <- lavInspect(Model1_Results, "vcov") 
+        vcov <- lavaan::inspect(Model1_Results, "vcov") 
         
         #internal lavaan representation of the model
         lavmodel <- Model1_Results@Model 
@@ -291,10 +289,10 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
         func <- lavmodel@def.function
         
         #vector of parameter estimates
-        x <- lav_model_get_parameters(lavmodel, type = "free") 
+        x <- lavaan::lav_model_get_parameters(lavmodel, type = "free") 
         
         #vector of indirect effect derivatives evaluated @ parameter estimates 
-        Jac <- lav_func_jacobian_complex(func = func, x = x)
+        Jac <- lavaan::lav_func_jacobian_complex(func = func, x = x)
         
         #replace vcov here with our corrected one. this gives parameter variance 
         var.ind <- Jac %*% vcov %*% t(Jac) 
@@ -311,7 +309,7 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
         
       }else{se.ghost<-NA
       if(":=" %in% Model_Output$op & is.na(se.ghost[1])){
-        se.ghost<-rep("SE could not be computed", count(":=" %in% Model_Output$op)$freq)
+        se.ghost<-rep("SE could not be computed", dplyr::count(":=" %in% Model_Output$op)$freq)
         ghost<-subset(Model_Output, Model_Output$op == ":=")[,c("lhs","op","rhs","free","label","est")]
         ghost2<-cbind(ghost,se.ghost)
         colnames(ghost2)[7]<-"SE"}else{}}
@@ -335,7 +333,7 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
     
     ##check whether correlations among latent variables is positive definite
     if(r > 1){
-      empty<-.tryCatch.W.E(check<-lowerTriangle(lavInspect(Model1_Results,"cor.lv")[1:r,1:r]))
+      empty<-.tryCatch.W.E(check<-gdata::lowerTriangle(lavaan::inspect(Model1_Results,"cor.lv")[1:r,1:r]))
       t<-max(check)
       t2<-min(check)}else{
         t<-1
@@ -347,7 +345,7 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
               Consequently, model fit estimates could not be computed and results should likely not be interpreted. Results are provided below 
               to enable troubleshooting. A model constraint that constrains the latent correlations to be above -1, less than 1, or to have positive variances is suggested.")
       
-      unstand<-data.frame(inspect(Model1_Results, "list")[,c("lhs","op","rhs","free","est")])
+      unstand<-data.frame(lavaan::inspect(Model1_Results, "list")[,c("lhs","op","rhs","free","est")])
       unstand<-subset(unstand, unstand$free != 0)                    
       unstand$free<-NULL
       results<-unstand
@@ -376,7 +374,7 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
       implied_order<-colnames(S_LD)
       implied[[1]]<-implied[[1]][implied_order,implied_order]
       implied2<-S_LD-implied[[1]]
-      eta<-as.vector(lowerTriangle(implied2,diag=TRUE))
+      eta<-as.vector(gdata::lowerTriangle(implied2,diag=TRUE))
       Q<-t(eta)%*%P1%*%solve(Eig2)%*%t(P1)%*%eta
       
       if(CFIcalc == TRUE){
@@ -384,20 +382,20 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
         ##now CFI
         ##run independence model
         if(estimation == "DWLS"){
-          testCFI<-.tryCatch.W.E(fitCFI <- sem(modelCFI, sample.cov =  S_LD, estimator = "DWLS", WLS.V = W_CFI, sample.nobs=2, optim.dx.tol = .01))
+          testCFI<-.tryCatch.W.E(fitCFI <- lavaan::sem(modelCFI, sample.cov =  S_LD, estimator = "DWLS", WLS.V = W_CFI, sample.nobs=2, optim.dx.tol = .01))
         }
         
         if(estimation == "ML"){
-          testCFI<-.tryCatch.W.E(fitCFI <- sem(modelCFI, sample.cov =  S_LD, estimator = "ML",sample.nobs=200, optim.dx.tol = .01,sample.cov.rescale=FALSE))
+          testCFI<-.tryCatch.W.E(fitCFI <- lavaan::sem(modelCFI, sample.cov =  S_LD, estimator = "ML",sample.nobs=200, optim.dx.tol = .01,sample.cov.rescale=FALSE))
         }
         testCFI$warning$message[1]<-ifelse(is.null(testCFI$warning$message), testCFI$warning$message[1]<-"Safe", testCFI$warning$message[1])
-        testCFI$warning$message[1]<-ifelse(is.na(inspect(fitCFI, "se")$theta[1,2]) == TRUE, testCFI$warning$message[1]<-"lavaan WARNING: model has NOT converged!", testCFI$warning$message[1])
+        testCFI$warning$message[1]<-ifelse(is.na(lavaan::inspect(fitCFI, "se")$theta[1,2]) == TRUE, testCFI$warning$message[1]<-"lavaan WARNING: model has NOT converged!", testCFI$warning$message[1])
         
         if(as.character(testCFI$warning$message)[1] != "lavaan WARNING: model has NOT converged!"){
           
           ##code to estimate chi-square of independence model#
           #First pull the estimates from Step 2
-          ModelQ_CFI <- parTable(fitCFI)
+          ModelQ_CFI <- lavaan::parTable(fitCFI)
           p2<-length(ModelQ_CFI$free)-z
           
           ##fix variances and freely estimate covariances
@@ -405,23 +403,23 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
           ModelQ_CFI$ustart <- ModelQ_CFI$est
           
           if(estimation == "DWLS"){
-            testCFI2<-.tryCatch.W.E(ModelQ_Results_CFI <- sem(model = ModelQ_CFI, sample.cov = S_LD, estimator = "DWLS", WLS.V = W_CFI, sample.nobs=2, optim.dx.tol = .01))
+            testCFI2<-.tryCatch.W.E(ModelQ_Results_CFI <- lavaan::sem(model = ModelQ_CFI, sample.cov = S_LD, estimator = "DWLS", WLS.V = W_CFI, sample.nobs=2, optim.dx.tol = .01))
           }
           
           if(estimation == "ML"){
-            testCFI2<-.tryCatch.W.E(ModelQ_Results_CFI <- sem(model = ModelQ_CFI, sample.cov = S_LD, estimator = "ML", sample.nobs=200, optim.dx.tol = .01,sample.cov.rescale=FALSE))
+            testCFI2<-.tryCatch.W.E(ModelQ_Results_CFI <- lavaan::sem(model = ModelQ_CFI, sample.cov = S_LD, estimator = "ML", sample.nobs=200, optim.dx.tol = .01,sample.cov.rescale=FALSE))
           }
           
           testCFI2$warning$message[1]<-ifelse(is.null(testCFI2$warning$message), testCFI2$warning$message[1]<-"Safe", testCFI2$warning$message[1])
-          testCFI2$warning$message[1]<-ifelse(is.na(inspect(ModelQ_Results_CFI , "se")$theta[1,2]) == TRUE, testCFI2$warning$message[1]<-"lavaan WARNING: model has NOT converged!", testCFI2$warning$message[1])
+          testCFI2$warning$message[1]<-ifelse(is.na(lavaan::inspect(ModelQ_Results_CFI , "se")$theta[1,2]) == TRUE, testCFI2$warning$message[1]<-"lavaan WARNING: model has NOT converged!", testCFI2$warning$message[1])
           
           if(as.character(testCFI2$warning$message)[1] != "lavaan WARNING: model has NOT converged!"){
             
             #pull the delta matrix (this doesn't depend on N)
-            S2.delt_Q_CFI <- lavInspect(ModelQ_Results_CFI, "delta")
+            S2.delt_Q_CFI <- lavaan::inspect(ModelQ_Results_CFI, "delta")
             
             ##weight matrix from stage 2
-            S2.W_Q_CFI <- lavInspect(ModelQ_Results_CFI, "WLS.V") 
+            S2.W_Q_CFI <- lavaan::inspect(ModelQ_Results_CFI, "WLS.V") 
             
             #the "bread" part of the sandwich is the naive covariance matrix of parameter estimates that would only be correct if the fit function were correctly specified
             bread_Q_CFI <- solve(t(S2.delt_Q_CFI)%*%S2.W_Q_CFI%*%S2.delt_Q_CFI) 
@@ -442,7 +440,7 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
             P1_CFI<-eigen(V_etaCFI)$vectors
             
             ##Pull eta = vector of residual covariances
-            eta_test_CFI<-parTable(ModelQ_Results_CFI)
+            eta_test_CFI<-lavaan::parTable(ModelQ_Results_CFI)
             eta_test_CFI<-subset(eta_test_CFI, eta_test_CFI$free != 0)
             eta_CFI<-cbind(eta_test_CFI[,14])
             
@@ -453,7 +451,7 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
         dfCFI <- (((k * (k + 1))/2) - k)
         
         ##df of user model
-        df <- lavInspect(Model1_Results, "fit")["df"]
+        df <- lavaan::inspect(Model1_Results, "fit")["df"]
         
         if(!(is.character(Q_CFI)) & !(is.character(Q))){
           CFI<-as.numeric(((Q_CFI-dfCFI)-(Q-df))/(Q_CFI-dfCFI))
@@ -473,7 +471,7 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
       Dvcov<-sqrt(diag(V_LD))
       
       #calculate the ratio of the rescaled and original S matrices
-      scaleO=as.vector(lowerTriangle((S_Stand/S_LD),diag=T))
+      scaleO=as.vector(gdata::lowerTriangle((S_Stand/S_LD),diag=T))
       
       ## MAke sure that if ratio in NaN (devision by zero) we put the zero back in: ### TEMP STUPID MICHEL FIX!
       scaleO[is.nan(scaleO)] <- 0
@@ -495,30 +493,30 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
       W_stand<-solve(V_stand2[order,order])
       
       if(estimation == "DWLS"){
-        emptystand<-.tryCatch.W.E(Fit_stand <- sem(Model1, sample.cov = S_Stand, estimator = "DWLS", WLS.V = W_stand, std.lv=std.lv,sample.nobs = 2, optim.dx.tol = .01))
+        emptystand<-.tryCatch.W.E(Fit_stand <- lavaan::sem(Model1, sample.cov = S_Stand, estimator = "DWLS", WLS.V = W_stand, std.lv=std.lv,sample.nobs = 2, optim.dx.tol = .01))
         if(is.null(emptystand$warning$message[1])) {
           emptystand$warning$message[1] <- 0
         }
       }
       
       if(estimation == "ML"){
-        emptystand<-.tryCatch.W.E(Fit_stand <- sem(Model1, sample.cov = S_Stand, estimator = "ML",  sample.nobs = 200, std.lv=std.lv, optim.dx.tol = .01,sample.cov.rescale=FALSE))
+        emptystand<-.tryCatch.W.E(Fit_stand <- lavaan::sem(Model1, sample.cov = S_Stand, estimator = "ML",  sample.nobs = 200, std.lv=std.lv, optim.dx.tol = .01,sample.cov.rescale=FALSE))
         if(is.null(emptystand$warning$message[1])) {
           emptystand$warning$message[1] <- 0
         }
       }
       
       ##perform same procedures for sandwich correction as in the unstandardized case
-      delt_stand <- lavInspect(Fit_stand, "delta") 
+      delt_stand <- lavaan::inspect(Fit_stand, "delta") 
       
-      W_stand <- lavInspect(Fit_stand, "WLS.V") 
+      W_stand <- lavaan::inspect(Fit_stand, "WLS.V") 
       
       bread_stand2<-.tryCatch.W.E(bread_stand <- solve(t(delt_stand)%*%W_stand %*%delt_stand,tol=toler))
       
-      if(class(bread_stand2$value)[1] != "matrix" | lavInspect(Fit_stand,"converged") == FALSE | class(emptystand)[1] == "simpleError"){
+      if(class(bread_stand2$value)[1] != "matrix" | lavaan::inspect(Fit_stand,"converged") == FALSE | class(emptystand)[1] == "simpleError"){
         warning("The standardized model failed to converge. This likely indicates more general problems with the model solution. Unstandardized results are printed below but this should be interpreted with caution.")
         
-        unstand<-data.frame(inspect(Model1_Results, "list")[,c("lhs","op","rhs","free","est")])
+        unstand<-data.frame(lavaan::inspect(Model1_Results, "list")[,c("lhs","op","rhs","free","est")])
         unstand<-subset(unstand, unstand$free != 0)                    
         unstand$free<-NULL
         results<-unstand
@@ -539,13 +537,13 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
         Ohtt_stand <- bread_stand %*% t(lettuce_stand)%*%Vcov_stand%*%lettuce_stand%*%bread_stand
         SE_stand <- as.matrix(sqrt(diag(Ohtt_stand)))
         
-        Model_Stand <- parTable(Fit_stand)
+        Model_Stand <- lavaan::parTable(Fit_stand)
         
         if(estimation == "DWLS"){
           #code for computing SE of ghost parameter (e.g., indirect effect in mediation model)
           if(":=" %in% Model_Stand$op & !(NA %in% Model_Stand$se)){
             #variance-covariance matrix of parameter estimates, q-by-q (this is the naive one)
-            vcov <- lavInspect(Fit_stand, "vcov") 
+            vcov <- lavaan::inspect(Fit_stand, "vcov") 
             
             #internal lavaan representation of the model
             lavmodel <- Fit_stand@Model 
@@ -554,10 +552,10 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
             func <- lavmodel@def.function
             
             #vector of parameter estimates
-            x <- lav_model_get_parameters(lavmodel, type = "free") 
+            x <- lavaan::lav_model_get_parameters(lavmodel, type = "free") 
             
             #vector of indirect effect derivatives evaluated @ parameter estimates 
-            Jac <- lav_func_jacobian_complex(func = func, x = x)
+            Jac <- lavaan::lav_func_jacobian_complex(func = func, x = x)
             
             #replace vcov here with our corrected one. this gives parameter variance 
             var.ind <- Jac %*% vcov %*% t(Jac) 
@@ -573,7 +571,7 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
             colnames(ghost2_stand)[7]<-"SE_stand"
           }else{
             if(":=" %in% Model_Stand$op & (NA %in% Model_Stand$se)){
-              se.ghost_stand<-rep("SE could not be computed", count(":=" %in% Model_Stand$op)$freq)
+              se.ghost_stand<-rep("SE could not be computed", dplyr::count(":=" %in% Model_Stand$op)$freq)
               ghost_stand<-subset(Model_Stand, Model_Stand$op == ":=")[,c("lhs","op","rhs","free","label","est")]
               ghost2_stand<-cbind(ghost_stand,se.ghost_stand)
               colnames(ghost2_stand)[7]<-"SE_stand"}else{}}
@@ -594,7 +592,7 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
           }
         }
         
-        unstand<-data.frame(inspect(Model1_Results, "list")[,c("lhs","op","rhs","free","est")])
+        unstand<-data.frame(lavaan::inspect(Model1_Results, "list")[,c("lhs","op","rhs","free","est")])
         unstand<-subset(unstand, unstand$free != 0)                    
         unstand$free<-NULL
         
@@ -605,7 +603,7 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
           unstand2<-rbind(cbind(unstand,SE),ghost2)
         }else{unstand2<-cbind(unstand,SE)}
         
-        stand<-data.frame(inspect(Fit_stand,"list")[,c("free","est")])
+        stand<-data.frame(lavaan::inspect(Fit_stand,"list")[,c("free","est")])
         stand<-subset(stand, stand$free != 0)
         stand$free<-NULL
         
@@ -618,27 +616,27 @@ usermodel <- function(covstruc,estimation="DWLS", model = "", CFIcalc=TRUE, std.
         colnames(stand2)<-c("est_stand","se_stand")
         
         ##df of user model
-        df<-lavInspect(Model1_Results, "fit")["df"]
+        df<-lavaan::inspect(Model1_Results, "fit")["df"]
         
         if(!(is.character(Q))){
           chisq<-Q
-          AIC<-(Q + 2*lavInspect(Model1_Results, "fit")["npar"])}else{chisq<-Q
+          AIC<-(Q + 2*lavaan::inspect(Model1_Results, "fit")["npar"])}else{chisq<-Q
           AIC<-NA}
         
         print("Calculating SRMR")
         
-        SRMR<-lavInspect(Model1_Results, "fit")["srmr"]
+        SRMR<-lavaan::inspect(Model1_Results, "fit")["srmr"]
         
         if(CFIcalc == TRUE){
           modelfit<-cbind(chisq,df,AIC,CFI,SRMR)}else{modelfit<-cbind(chisq,df,AIC,SRMR)}
         
-        std_all<-standardizedSolution(Fit_stand)
+        std_all<-lavaan::standardizedSolution(Fit_stand)
         std_all<-subset(std_all, !(is.na(std_all$pvalue)))
         
         results<-cbind(unstand2, stand2)
        
         ##add in fixed effects
-        base_model<-data.frame(inspect(ReorderModel, "list")[,c("lhs","op","rhs","free","est")])
+        base_model<-data.frame(lavaan::inspect(ReorderModel, "list")[,c("lhs","op","rhs","free","est")])
         base_model<-subset(base_model,  !(paste0(base_model$lhs, base_model$op,base_model$rhs) %in% paste0(unstand2$lhs, unstand2$op, unstand2$rhs)))
         base_model<-subset(base_model, base_model$op == "=~" | base_model$op == "~~" | base_model$op == "~")
         if(nrow(base_model) > 0){

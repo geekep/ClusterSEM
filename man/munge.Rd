@@ -25,24 +25,24 @@ munge(
 
 \item{trait.names}{A vector of trait names which will be used as names for the munged files}
 
-\item{N}{}
+\item{N}{default to NULL}
 
 \item{info.filter}{Numeric value which is used as a lower bound for imputation quality (INFO)}
 
 \item{maf.filter}{Numeric value used as a lower bound for minor allele frequency}
 
-\item{log.name}{}
+\item{log.name}{default to NULL}
 
-\item{column.names}{}
+\item{column.names}{column.names is a list(SNP, A1, A2, effect, P, MAF, Z) to specify other name}
 
-\item{parallel}{}
+\item{parallel}{default to FALSE}
 
-\item{cores}{}
+\item{cores}{default to NULL}
 
-\item{overwrite}{}
+\item{overwrite}{default to TRUE}
 }
 \value{
-The function writes files of the ".sumstats" format, which can be used to estimate SNP heritability and genetic covariance using the ldsc() function. The function will also output a .log file that should be examined to ensure that column names are being interpret correctly.
+The function writes files of the ".sumstats.gz" format, which can be used to estimate SNP heritability and genetic covariance using the ldsc() function. The function will also output a .log file that should be examined to ensure that column names are being interpret correctly.
 }
 \description{
 Function to process GWAS summary statistics files and prepare them for LD score regression

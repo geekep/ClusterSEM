@@ -35,17 +35,17 @@ ldsc(
 
 \item{sep_weights}{Logical which indicates whether the weights are different form the LD scores used for the regression, defaults to FALSE.}
 
-\item{chr}{}
+\item{chr}{defaults to 22}
 
-\item{n.blocks}{}
+\item{n.blocks}{defaults to 200}
 
-\item{ldsc.log}{}
+\item{ldsc.log}{defaults to NULL}
 
-\item{stand}{}
+\item{stand}{default to FALSE}
 
-\item{select}{}
+\item{select}{default to FALSE}
 
-\item{chisq.max}{}
+\item{chisq.max}{default to NA}
 }
 \value{
 The function returns a list with 5 named entries
@@ -56,7 +56,7 @@ V  variance covariance matrix of the parameter estimates in S
 
 I  matrix containing the "cross trait intercepts", or the error covariance between traits induced by overlap, in terms of subjects, between the GWAS on which the analyses are based
 
-N  a vector containing the sample size (for the genetic variances) and the geometric mean of sample sizes (i.e. sqrt(N1,N2)) between two samples for the covariances
+N  a vector containing the sample size (for the genetic variances) and the geometric mean of sample sizes (i.e. sqrt(N1,N2)) between two samples for the covariance
 
 m  number of SNPs used to compute the LD scores
 }

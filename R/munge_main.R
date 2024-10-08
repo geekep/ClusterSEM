@@ -1,3 +1,4 @@
+# main function of user munge function
 .munge_main <- function(i, utilfuncs, file, filename, trait.name, N, ref, hm3, info.filter, maf.filter, column.names, overwrite, log.file=NULL) {
   if (is.null(log.file)) {
     log.file <- file(paste0(trait.name, "_munge.log"),open="wt")
@@ -12,7 +13,7 @@
     }
   }
   if (is.null(file)) {
-    file <- read.table(filename, header=T, quote="\"", fill=T, na.string=c(".", NA, "NA", ""))
+    file <- read.table(filename, header=T, quote="\"", fill=T, na.strings=c(".", NA, "NA", ""))
   }
   .LOG("Munging file: ", filename,file=log.file, print=TRUE)
 
@@ -98,7 +99,7 @@ Please note that this is likely effective sample size cut in half. The function 
   }
  
   #Compute Z score
-  file$Z <- sign(file$effect) * sqrt(qchisq(file$P,1,lower=F))
+  file$Z <- sign(file$effect) * sqrt(qchisq(file$P,1,lower.tail=F))
   
   ##filter on INFO column at designated threshold provided for the info.filter argument (default = 0.9)
   if("INFO" %in% colnames(file)) {
@@ -128,10 +129,10 @@ Please note that this is likely effective sample size cut in half. The function 
   .LOG(nrow(output), "SNPs are left in the summary statistics file ", filename, " after QC.",file=log.file)
   
   #remove spaces in trait.names file to avoid errors with fread functionality used for s_ldsc
-  trait.name<-str_replace_all(trait.name, fixed(" "), "") 
+  trait.name<-stringr::str_replace_all(trait.name, stringr::fixed(" "), "") 
   
   write.table(x = output,file = paste0(trait.name,".sumstats"),sep="\t", quote = FALSE, row.names = F)
-  gzip(paste0(trait.name,".sumstats"), overwrite=overwrite)
+  R.utils::gzip(paste0(trait.name,".sumstats"), overwrite=overwrite)
   .LOG("I am done munging file: ", filename,file=log.file)
   .LOG("The file is saved as ", paste0(trait.name,".sumstats.gz"), " in the current working directory.",file=log.file)
   return()
