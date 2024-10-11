@@ -42,6 +42,7 @@ get_coef_from_gwas <- function(exposure = "ieu-a-2",
 
 #' Load multi data from IEU GWAS summary dataset
 #' @description Estimate the multivariate effects of HDL cholesterol || id:ieu-a-299 (#SNP=79), LDL cholesterol || id:ieu-a-300 (#SNP=68) and triglycerides || id:ieu-a-302 (#SNP=42) on coronary artery disease || id:ieu-a-7 risk using 143 uncorrelated SNP genetic variants
+#' 
 #' @param exposures default to c("ieu-a-299","ieu-a-300","ieu-a-302")
 #' @param outcome default to "ieu-a-7"
 #'

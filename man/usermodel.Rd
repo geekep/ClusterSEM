@@ -10,7 +10,7 @@ usermodel(
   model = "",
   CFIcalc = TRUE,
   std.lv = FALSE,
-  imp_cov = FALSE,
+  imp_cov = TRUE,
   fix_resid = TRUE,
   toler = NULL
 )
@@ -26,7 +26,7 @@ usermodel(
 
 \item{std.lv}{Optional argument to denote whether all latent variables are standardized using unit variance identification (default = FALSE)}
 
-\item{imp_cov}{Optional argument to denote whether the user wants the model-implied and residual covariance matrix included in the usermodel output (default = FALSE)}
+\item{imp_cov}{Optional argument to denote whether the user wants the model-implied and residual covariance matrix included in the usermodel output (default = TRUE)}
 
 \item{fix_resid}{default to TRUE}
 
@@ -36,5 +36,5 @@ usermodel(
 The function estimates a user-specified model, along with model fit indices.
 }
 \description{
-Function to run a user-specified structural equation model based on output from multivariable LDSC, HDL and metaCCA
+Function to run a user-specified structural equation model based on output from multivariate LDSC, HDL and metaCCA
 }

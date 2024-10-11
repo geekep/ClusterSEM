@@ -15,7 +15,7 @@ ldsc(
   chr = 22,
   n.blocks = 200,
   ldsc.log = NULL,
-  stand = FALSE,
+  stand = TRUE,
   select = FALSE,
   chisq.max = NA
 )
@@ -41,7 +41,7 @@ ldsc(
 
 \item{ldsc.log}{defaults to NULL}
 
-\item{stand}{default to FALSE}
+\item{stand}{If you want to output the standard errors (SE) of the ld-score regression in the order they are listed in the genetic covariance (i.e., S) matrix. Default to TRUE.}
 
 \item{select}{default to FALSE}
 

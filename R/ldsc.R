@@ -11,7 +11,7 @@
 #' @param chr defaults to 22
 #' @param n.blocks defaults to 200
 #' @param ldsc.log defaults to NULL
-#' @param stand default to FALSE
+#' @param stand If you want to output the standard errors (SE) of the ld-score regression in the order they are listed in the genetic covariance (i.e., S) matrix. Default to TRUE.
 #' @param select default to FALSE
 #' @param chisq.max default to NA
 #'
@@ -24,7 +24,7 @@
 #' @export
 ldsc <- function(traits, sample.prev, population.prev, ld, wld,
                 trait.names = NULL, sep_weights = FALSE, chr = 22,
-                n.blocks = 200, ldsc.log = NULL, stand = FALSE,select=FALSE,chisq.max = NA) {
+                n.blocks = 200, ldsc.log = NULL, stand = TRUE, select=FALSE,chisq.max = NA) {
   
   time <- proc.time()
   
@@ -554,7 +554,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
     #enter SEs from diagonal of standardized V
     r<-nrow(S)
     SE_Stand<-matrix(0, r, r)
-    SE_Stand[lower.tri(SE_Stand,diag=TRUE)] <-sqrt(diag(V_Stand))
+    SE_Stand[lower.tri(SE_Stand,diag=TRUE)] <- sqrt(diag(V_Stand))
 
 
     .LOG(c("     ", "     "), file=log.file, print = FALSE)

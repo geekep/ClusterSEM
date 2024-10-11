@@ -18,7 +18,7 @@ munge(c("~/mrSEM/data/sumstats/GIANT/SNP_gwas_mc_merge_nogc.tbl.uniq",
       cores = 8,
       overwrite = TRUE)
 
-#run multivariable LDSC to create the S and V matrices
+#run multivariate LDSC to create the S and V matrices
 anthro <- ldsc(
   traits <- c(
     "~/mrSEM/data/sumstats/Anthro/BMI2015.sumstats.gz",
@@ -38,19 +38,24 @@ anthro <- ldsc(
   trait.names <- c("BMI", "WHR", "CO", "Waist", "Hip", "Height", "IHC", "BL", "BW")
 )
 
+# Convert genetic covariance matrix (i.e. S) to correlation matrix
 anthro.corMatirx <- cov2cor(anthro[["S"]])
 rownames(anthro.corMatirx) <- colnames(anthro[["S"]])
 
-# method: ward.D, ward.D2, single, complete, average, mcquitty, median, centroid
-hclustTree <- hclust(d = as.dist((1 - anthro.corMatirx) / 2), method = "complete")
+# Confirm the number of latent variables using hierarchical clustering
+# In stats package, hclust method parameter: ward.D, ward.D2, single, complete, average, mcquitty, median, centroid
+require(stats)
+hclustTree <- stats::hclust(d = as.dist((1 - anthro.corMatirx) / 2), method = "complete")
 plot(hclustTree,
      main = "Hierarchical clustering for 9 anthropometric traits",
      xlab = 'Traits',
      ylab = '(1-Correlation_coefficient)/2',
      hang = -1)
 
-# pheatmap
-pheatmap(
+# Confirm the number of latent variables using hierarchical clustering
+# In pheatmap package, pheatmap method parameter is similar to the above stats::hclust method parameter option.
+require(pheatmap)
+pheatmap::pheatmap(
   anthro.corMatirx,
   cluster_rows = TRUE,
   cluster_cols = TRUE,
@@ -65,24 +70,28 @@ pheatmap(
   fontsize_col = 6
 )
 
-# Spectral Clustering
+# Exploratory Factor Analysis (EFA) using PCA and factor axis rotation
+require(stats)
+require(Matrix)
+#In the Matrix package, smooth the anthro.corMatirx matrix for EFA using the nearPD function. 
+Ssmooth <- as.matrix((nearPD(anthro.corMatirx, corr = FALSE))$mat)
+#In the stats package, run EFA with promax rotation and 2 factors using the factanal function
+EFA <- stats::factanal(covmat = Ssmooth, factors = 2, rotation = "promax")
+
+# Exploratory Factor Analysis (EFA) using spectral clustering
+require(kernlab)
 kernelMatrix <- as.kernelMatrix(anthro.corMatirx, center=FALSE)
 sc <- specc(x=kernelMatrix, centers=2, data=NULL, na.action = na.omit)
 
-# anthro.CFTree <- BirchCF(x=as.data.frame(anthro), Type = 'df', branchingfactor = 4, threshold = 0.4)
+# Hierarchical Exploratory Factor Analysis (EFA) using BIRCH clustering
+anthro.CFTree <- BirchCF(x=as.data.frame(anthro.corMatirx), Type = 'df', branchingfactor = 4, threshold = 0.4)
 
-#smooth the anthro matrix for EFA using the nearPD function in the Matrix package. 
-Ssmooth <- as.matrix((nearPD(anthro$S, corr = FALSE))$mat)
-
-#run EFA with promax rotation and 2 factors using the factanal function in the stats package
-EFA <- factanal(covmat = Ssmooth, factors = 2, rotation = "promax")
-
-#Specify the Genomic confirmatory factor model
+# Specify the genomic confirmatory factor model
 CFAofEFA <- 'F1 =~ NA*BMI + WHR + CO + Waist + Hip
              F2 =~ NA*Height + IHC + BL + BW
 F1 ~~ F2
 Waist ~~ a*Waist
 a > .001'
 
-#run the model
-Anthro <- usermodel(anthro, estimation = "DWLS", model = CFAofEFA, CFIcalc = TRUE, std.lv = TRUE, imp_cov = FALSE)
+# Confirmatory factor analysis (CFA) based on specified the genomic confirmatory factor model
+anthro.CFA <- usermodel(anthro, estimation = "DWLS", model = CFAofEFA, CFIcalc = TRUE, std.lv = TRUE, imp_cov = TRUE)
