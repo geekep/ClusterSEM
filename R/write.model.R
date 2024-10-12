@@ -1,11 +1,12 @@
 #' Automate writing lavaan model syntax based on clustering output
 #' @description Function to automate writing lavaan model syntax based on clustering output
-#'
+#' 
+#' @param clusters Output from various clustering algorithms
 #' @param S_LD Genetic covariance matrix
 #' @param fix_resid default to TRUE
-#' @param common Whether to specify a common factor model
+#' @param common Whether to specify a common factor model, default to FALSE
 #'
-#' @return
+#' @return lavaan model syntax satisfying clusters
 #' @export
 write.model <-
   function(clusters,
@@ -32,7 +33,7 @@ write.model <-
       for (f in 1:ncol(clusters)) {
         u <- 1
         Model1 <- ""
-        for (i in 1:nrow(Loadings)) {
+        for (i in 1:nrow(clusters)) {
           if (u == 1) {
             linestart <- paste("F", f, "=~",  colnames(S_LD)[i], sep = "")
             u <- u + 1

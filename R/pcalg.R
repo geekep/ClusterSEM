@@ -1,4 +1,4 @@
-#'  Re-sampling from the genetic covariance matrix and variance covariance matrix of the parameter estimates in S (i.e., LDSC/HDL/metaCCA)
+#' Re-sampling from the genetic covariance matrix and variance covariance matrix of the parameter estimates in S (i.e., LDSC/HDL/metaCCA)
 #' @description Function for re-sampling from the genetic covariance matrix and variance covariance matrix of the parameter estimates in S
 #' 
 #' @param suffStat Output from the multivariate LDSC/HDL/metaCCA function
