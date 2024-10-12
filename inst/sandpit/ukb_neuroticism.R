@@ -1,0 +1,113 @@
+#munge the summary statistics
+munge(
+  files = c(
+    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/voices.txt",
+    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/visions.txt",
+    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/signs.txt",
+    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/conspiracy.txt",
+    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/irritable.txt",
+    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/mania.txt",
+    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/depression.txt",
+    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/inadequacy.txt",
+    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/tired.txt",
+    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/lostInterest.txt",
+    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/avoid.txt",
+    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/repeatedThoughts.txt",
+    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/upset.txt",
+    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/multipleWorries.txt",
+    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/cannotRelax.txt",
+    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/recentWorry.txt",
+    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/foreboding.txt"
+  ),
+  hm3 = "~/mrSEM/data/eur_w_ld_chr/w_hm3.snplist",
+  trait.names = c(
+    "voices",
+    "visions",
+    "signs",
+    "conspiracy",
+    "irritable",
+    "mania",
+    "depression",
+    "inadequacy",
+    "tired",
+    "lostInterest",
+    "avoid",
+    "repeatedThoughts",
+    "upset",
+    "multipleWorries",
+    "cannotRelax",
+    "recentWorry",
+    "foreboding"
+  ),
+  N = NULL,
+  info.filter = 0.9,
+  maf.filter = 0.01,
+  column.names = list(
+    SNP = 'rsid',
+    A1 = 'ref',
+    A2 = 'alt',
+    effect = 'beta',
+    P = 'pval',
+    MAF = 'minor_AF',
+    Z = 'tstat',
+    N = 'n_complete_samples'
+  ), 
+  parallel = TRUE,
+  cores = 8,
+  overwrite = TRUE
+)
+
+# ldsc
+ukb_neuroticism <- ldsc(
+  traits =
+    c(
+      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/voices.sumstats.gz",
+      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/visions.sumstats.gz",
+      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/signs.sumstats.gz",
+      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/conspiracy.sumstats.gz",
+      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/irritable.sumstats.gz",
+      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/mania.sumstats.gz",
+      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/depression.sumstats.gz",
+      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/inadequacy.sumstats.gz",
+      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/tired.sumstats.gz",
+      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/lostInterest.sumstats.gz",
+      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/avoid.sumstats.gz",
+      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/repeatedThoughts.sumstats.gz",
+      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/upset.sumstats.gz",
+      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/multipleWorries.sumstats.gz",
+      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/cannotRelax.sumstats.gz",
+      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/recentWorry.sumstats.gz",
+      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/foreboding.sumstats.gz"
+    ),
+  ld = "~/mrSEM/data/eur_w_ld_chr",
+  wld = "~/mrSEM/data/eur_w_ld_chr",
+  sample.prev = rep(0.5, 17),
+  population.prev = rep(0.5, 17),
+  trait.names =
+    c(
+      "voices",
+      "visions",
+      "signs",
+      "conspiracy",
+      "irritable",
+      "mania",
+      "depression",
+      "inadequacy",
+      "tired",
+      "lostInterest",
+      "avoid",
+      "repeatedThoughts",
+      "upset",
+      "multipleWorries",
+      "cannotRelax",
+      "recentWorry",
+      "foreboding"
+    ),
+  sep_weights = FALSE,
+  chr = 22,
+  n.blocks = 200,
+  ldsc.log = NULL,
+  stand = FALSE,
+  select = FALSE,
+  chisq.max = NA
+)

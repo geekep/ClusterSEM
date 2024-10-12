@@ -1,0 +1,76 @@
+---
+title: "GenomicSEM_BayesianNetwork"
+output: html_document
+date: "2023-11-04"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(pcalg)
+```
+
+```{r Real world example GWAS: BMI and CAD, echo=FALSE}
+covstruct.bmi.cad <-
+  ldsc(
+    traits = c(
+      "~/R-workspace/mrSEM/data/GiANT/GiANT_2015_BMI.sumstats.gz",
+      "~/R-workspace/mrSEM/data/CARDIoGRAMplusC4D/CARDIoGRAMplusC4D_2015_CAD.sumstats.gz"
+    ),
+    trait.names = c("BMI", "CAD"),
+    ld = "~/R-workspace/mrSEM/data/eur_w_ld_chr",
+    wld = "~/R-workspace/mrSEM/data/eur_w_ld_chr",
+    sample.prev = NA,
+    population.prev = NA
+  )
+
+suffstats <-
+  Cluster.suffStat(suffStat = covstruct.bmi.cad, rep = 1000)
+pc_network <- pc(
+  suffstats,
+  indepTest = ClusterSEM.indepTest,
+  alpha = .05,
+  labels = c("BMI", "CAD"),
+  skel.method = "stable",
+  m.max = Inf,
+  fixedGaps = NULL,
+  fixedEdges = NULL,
+  NAdelete = TRUE,
+  numCores = 2,
+  verbose = TRUE
+)
+
+plot(pc_network, main = "Causal CPDAG of BMI and CAD")
+
+dev.off()
+
+```
+
+```{r Real world example: BMI, Carbohydrate and MDD, echo=FALSE}
+munge(files = c("~/R-workspace/mrSEM/data/PGC/PGC_UKB_depression_genome-wide.sumstats") ,
+      hm3 = "~/R-workspace/mrSEM/data/eur_w_ld_chr/w_hm3.snplist",
+      trait.names = c("MDD"),
+      N = 449855.8,
+      info.filter = .9,
+      maf.filter = .05)
+
+covstruct <- ldsc(traits = c("~/R-workspace/mrSEM/data/GiANT/GiANT_2015_BMI.sumstats.gz",
+                             "~/R-workspace/mrSEM/data/SSGAC/Carbohydrate.sumstats.gz",
+                             "~/R-workspace/mrSEM/data/PGC/MDD.sumstats.gz"),
+                  trait.names = c("BMI", "Carbohydrate", "MDD"),
+                  ld = "~/R-workspace/mrSEM/data/eur_w_ld_chr",
+                  wld = "~/R-workspace/mrSEM/data/eur_w_ld_chr",
+                  sample.prev = NA,
+                  population.prev = NA)
+
+suffstats <- Cluster.suffStat(suffStat = covstruct, rep = 1000)
+pc_network <- pc(suffstats, indepTest = ClusterSEM.indepTest, alpha = .05,
+                 labels=c("BMI", "Carbohydrate", "MDD"), skel.method="stable", m.max=Inf,
+                 fixedGaps = NULL, fixedEdges = NULL, NAdelete = TRUE,
+                 numCores = 1, verbose = TRUE)
+plot(pc_network, main = "Causal CPDAG of BMI, Carbohydrate and MDD")
+
+dev.off()
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

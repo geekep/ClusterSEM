@@ -1,16 +1,219 @@
-require(data.table)
-require(dplyr)
-require(stringr)
-require(pheatmap)
-
 # load variants.tsv
+require(data.table)
 variants <-
   fread(
     '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/variants.tsv',
     select = c('variant', 'rsid', 'ref', 'alt'),
     data.table = FALSE
   )
-# Voices
+
+# neuroticism.R: mood.txt, misery.txt, irrit.txt, hurt.txt, fedup.txt, nervous.txt, worry.txt, tense.txt, embarras.txt, nerves.txt, lonely.txt, guilt.txt
+# mood.txt
+Mood <-
+  fread(
+    '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Mood_1920.gwas.imputed_v3.both_sexes.tsv',
+    data.table = FALSE
+  )
+Mood <- inner_join(Mood, variants, by = 'variant')
+write.table(
+  Mood,
+  file = '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/mood.txt',
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = TRUE
+)
+rm(Mood)
+
+# misery.txt
+Misery <-
+  fread(
+    '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Misery_1930.gwas.imputed_v3.both_sexes.tsv',
+    data.table = FALSE
+  )
+Misery <- inner_join(Misery, variants, by = 'variant')
+write.table(
+  Misery,
+  file = '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/misery.txt',
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = TRUE
+)
+rm(Misery)
+
+# irrit.txt
+Irritability <-
+  fread(
+    '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Irritability_1940.gwas.imputed_v3.both_sexes.tsv',
+    data.table = FALSE
+  )
+Irritability <- inner_join(Irritability, variants, by = 'variant')
+write.table(
+  Irritability,
+  file = '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/irrit.txt',
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = TRUE
+)
+rm(Irritability)
+
+# hurt.txt
+Hurt <-
+  fread(
+    '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Hurt_1950.gwas.imputed_v3.both_sexes.tsv',
+    data.table = FALSE
+  )
+Hurt <- inner_join(Hurt, variants, by = 'variant')
+write.table(
+  Hurt,
+  file = '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/hurt.txt',
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = TRUE
+)
+rm(Hurt)
+
+# fedup.txt
+Fedup <-
+  fread(
+    '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Fedup_1960.gwas.imputed_v3.both_sexes.tsv',
+    data.table = FALSE
+  )
+Fedup <- inner_join(Fedup, variants, by = 'variant')
+write.table(
+  Fedup,
+  file = '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/fedup.txt',
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = TRUE
+)
+rm(Fedup)
+
+# nervous.txt
+Nervous <-
+  fread(
+    '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Nervous_1970.gwas.imputed_v3.both_sexes.tsv',
+    data.table = FALSE
+  )
+Nervous <- inner_join(Nervous, variants, by = 'variant')
+write.table(
+  Nervous,
+  file = '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/nervous.txt',
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = TRUE
+)
+rm(Nervous)
+
+# worry.txt
+Worry <-
+  fread(
+    '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Worry_1980.gwas.imputed_v3.both_sexes.tsv',
+    data.table = FALSE
+  )
+Worry <- inner_join(Worry, variants, by = 'variant')
+write.table(
+  Worry,
+  file = '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/worry.txt',
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = TRUE
+)
+rm(Worry)
+
+# tense.txt
+Tense <-
+  fread(
+    '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Tense_1990.gwas.imputed_v3.both_sexes.tsv',
+    data.table = FALSE
+  )
+Tense <- inner_join(Tense, variants, by = 'variant')
+write.table(
+  Tense,
+  file = '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/tense.txt',
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = TRUE
+)
+rm(Tense)
+
+# embarras.txt
+Embarras <-
+  fread(
+    '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Embarras_2000.gwas.imputed_v3.both_sexes.tsv',
+    data.table = FALSE
+  )
+Embarras <- inner_join(Embarras, variants, by = 'variant')
+write.table(
+  Embarras,
+  file = '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/embarras.txt',
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = TRUE
+)
+rm(Embarras)
+
+# nerves.txt
+Nerves <-
+  fread(
+    '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Nerves_2010.gwas.imputed_v3.both_sexes.tsv',
+    data.table = FALSE
+  )
+Nerves <- inner_join(Nerves, variants, by = 'variant')
+write.table(
+  Nerves,
+  file = '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/nerves.txt',
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = TRUE
+)
+rm(Nerves)
+
+# lonely.txt
+Lonely <-
+  fread(
+    '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Lonely_2020.gwas.imputed_v3.both_sexes.tsv',
+    data.table = FALSE
+  )
+Lonely <- inner_join(Lonely, variants, by = 'variant')
+write.table(
+  Lonely,
+  file = '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/lonely.txt',
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = TRUE
+)
+rm(Lonely)
+
+# guilt.txt
+Guilt <-
+  fread(
+    '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Guilt_2030.gwas.imputed_v3.both_sexes.tsv',
+    data.table = FALSE
+  )
+Guilt <- inner_join(Guilt, variants, by = 'variant')
+write.table(
+  Guilt,
+  file = '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/guilt.txt',
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = TRUE
+)
+rm(Guilt)
+
+# ukb_pfactor.R
+# Voices.txt
 Voices <-
   fread(
     '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Voices_20463.gwas.imputed_v3.both_sexes.tsv',
@@ -26,7 +229,7 @@ write.table(
   col.names = TRUE
 )
 rm(Voices)
-# Visions
+# Visions.txt
 Visions <-
   fread(
     '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Visions_20471.gwas.imputed_v3.both_sexes.tsv',
@@ -42,7 +245,7 @@ write.table(
   col.names = TRUE
 )
 rm(Visions)
-# Visions
+# Visions.txt
 Visions <-
   fread(
     '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Visions_20471.gwas.imputed_v3.both_sexes.tsv',
@@ -58,7 +261,7 @@ write.table(
   col.names = TRUE
 )
 rm(Visions)
-# Signs
+# Signs.txt
 Signs <-
   fread(
     '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Signs_20474.gwas.imputed_v3.both_sexes.tsv',
@@ -74,7 +277,7 @@ write.table(
   col.names = TRUE
 )
 rm(Signs)
-# Avoid
+# Avoid.txt
 Avoid <-
   fread(
     '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Avoid_20495.gwas.imputed_v3.both_sexes.tsv',
@@ -90,7 +293,7 @@ write.table(
   col.names = TRUE
 )
 rm(Avoid)
-# CannotRelax
+# CannotRelax.txt
 CannotRelax <-
   fread(
     '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/CannotRelax_20515.gwas.imputed_v3.both_sexes.tsv',
@@ -106,7 +309,7 @@ write.table(
   col.names = TRUE
 )
 rm(CannotRelax)
-# Conspiracy
+# Conspiracy.txt
 Conspiracy <-
   fread(
     '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Conspiracy_20468.gwas.imputed_v3.both_sexes.tsv',
@@ -122,7 +325,7 @@ write.table(
   col.names = TRUE
 )
 rm(Conspiracy)
-# Depression
+# Depression.txt
 Depression <-
   fread(
     '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Depression.20510.gwas.imputed_v3.both_sexes.tsv',
@@ -138,7 +341,7 @@ write.table(
   col.names = TRUE
 )
 rm(Depression)
-# Foreboding
+# Foreboding.txt
 Foreboding <-
   fread(
     '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Foreboding_20512.gwas.imputed_v3.both_sexes.tsv',
@@ -154,7 +357,7 @@ write.table(
   col.names = TRUE
 )
 rm(Foreboding)
-# Inadequacy
+# Inadequacy.txt
 Inadequacy <-
   fread(
     '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Inadequacy_20507.gwas.imputed_v3.both_sexes.tsv',
@@ -170,7 +373,7 @@ write.table(
   col.names = TRUE
 )
 rm(Inadequacy)
-# Irritable
+# Irritable.txt
 Irritable <-
   fread(
     '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Irritable_20494.gwas.imputed_v3.both_sexes.tsv',
@@ -186,7 +389,7 @@ write.table(
   col.names = TRUE
 )
 rm(Irritable)
-# LostInterest
+# LostInterest.txt
 LostInterest <-
   fread(
     '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/LostInterest_20514.gwas.imputed_v3.both_sexes.tsv',
@@ -202,7 +405,7 @@ write.table(
   col.names = TRUE
 )
 rm(LostInterest)
-# MultipleWorries
+# MultipleWorries.txt
 MultipleWorries <-
   fread(
     '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/MultipleWorries_20540.gwas.imputed_v3.both_sexes.tsv',
@@ -218,7 +421,7 @@ write.table(
   col.names = TRUE
 )
 rm(MultipleWorries)
-# Mania
+# Mania.txt
 Mania <-
   fread(
     '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Mania_20501.gwas.imputed_v3.both_sexes.tsv',
@@ -234,7 +437,7 @@ write.table(
   col.names = TRUE
 )
 rm(Mania)
-# RecentWorry
+# RecentWorry.txt
 RecentWorry <-
   fread(
     '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/RecentWorry_20520.gwas.imputed_v3.both_sexes.tsv',
@@ -250,7 +453,7 @@ write.table(
   col.names = TRUE
 )
 rm(RecentWorry)
-# RepeatedThoughts
+# RepeatedThoughts.txt
 RepeatedThoughts <-
   fread(
     '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/RepeatedThoughts_20497.gwas.imputed_v3.both_sexes.tsv',
@@ -266,7 +469,7 @@ write.table(
   col.names = TRUE
 )
 rm(RepeatedThoughts)
-# Tired
+# Tired.txt
 Tired <-
   fread(
     '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Tired_20519.gwas.imputed_v3.both_sexes.tsv',
@@ -282,7 +485,7 @@ write.table(
   col.names = TRUE
 )
 rm(Tired)
-# Upset
+# Upset.txt
 Upset <-
   fread(
     '~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/Upset_20498.gwas.imputed_v3.both_sexes.tsv',
@@ -298,128 +501,3 @@ write.table(
   col.names = TRUE
 )
 rm(Upset)
-
-# munge
-munge(
-  files = c(
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/voices.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/visions.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/signs.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/conspiracy.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/irritable.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/mania.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/depression.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/inadequacy.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/tired.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/lostInterest.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/avoid.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/repeatedThoughts.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/upset.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/multipleWorries.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/cannotRelax.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/recentWorry.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/foreboding.txt"
-  ),
-  hm3 = "~/mrSEM/data/eur_w_ld_chr/w_hm3.snplist",
-  trait.names = c(
-    "voices",
-    "visions",
-    "signs",
-    "conspiracy",
-    "irritable",
-    "mania",
-    "depression",
-    "inadequacy",
-    "tired",
-    "lostInterest",
-    "avoid",
-    "repeatedThoughts",
-    "upset",
-    "multipleWorries",
-    "cannotRelax",
-    "recentWorry",
-    "foreboding"
-  ),
-  N = NULL,
-  info.filter = 0.9,
-  maf.filter = 0.01,
-  column.names = list(
-    SNP = 'rsid',
-    A1 = 'ref',
-    A2 = 'alt',
-    effect = 'beta',
-    P = 'pval',
-    MAF = 'minor_AF',
-    Z = 'tstat',
-    N = 'n_complete_samples'
-  ), 
-  parallel = TRUE,
-  cores = 8,
-  overwrite = TRUE
-)
-
-# ldsc
-LDSCoutput_ukb_pfactor <- ldsc(
-  traits =
-    c(
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/voices.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/visions.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/signs.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/conspiracy.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/irritable.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/mania.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/depression.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/inadequacy.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/tired.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/lostInterest.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/avoid.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/repeatedThoughts.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/upset.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/multipleWorries.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/cannotRelax.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/recentWorry.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/foreboding.sumstats.gz"
-    ),
-  ld = "~/mrSEM/data/eur_w_ld_chr",
-  wld = "~/mrSEM/data/eur_w_ld_chr",
-  sample.prev = rep(0.5, 17),
-  population.prev = rep(0.5, 17),
-  trait.names =
-    c(
-      "voices",
-      "visions",
-      "signs",
-      "conspiracy",
-      "irritable",
-      "mania",
-      "depression",
-      "inadequacy",
-      "tired",
-      "lostInterest",
-      "avoid",
-      "repeatedThoughts",
-      "upset",
-      "multipleWorries",
-      "cannotRelax",
-      "recentWorry",
-      "foreboding"
-    ),
-  sep_weights = FALSE,
-  chr = 22,
-  n.blocks = 200,
-  ldsc.log = NULL,
-  stand = FALSE,
-  select = FALSE,
-  chisq.max = NA
-)
-
-pheatmap(
-  LDSCoutput_ukb_pfactor$S,
-  cluster_rows = FALSE,
-  cluster_cols = TRUE,
-  clustering_distance_rows = "euclidean",
-  clustering_distance_cols = "euclidean",
-  clustering_method = "complete"
-)
-
-ukb_pfactor.CFTree <- BirchCF(x=as.data.frame(LDSCoutput_ukb_pfactor$S), Type = 'df', branchingfactor = 6, threshold = 0.01)

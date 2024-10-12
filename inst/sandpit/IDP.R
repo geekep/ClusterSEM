@@ -1,6 +1,3 @@
-require(GenomicSEM)
-require(pheatmap)
-
 files.name <- list.files('/storageB/xuzhen/IDP')
 files.name.vector <- c()
 trait.name.vector <- c()
@@ -14,7 +11,7 @@ for(file.name in files.name)
   # rm(df)
 }
 
-# munge
+#munge the summary statistics
 munge(
   files = files.name.vector,
   hm3 = "~/mrSEM/data/eur_w_ld_chr/w_hm3.snplist",
@@ -29,7 +26,7 @@ munge(
 )
 
 # ldsc
-LDSCoutput_IDP_1326_1366 <- ldsc(
+IDP <- ldsc(
   traits = paste0("/storageB/xuzhen/IDP_sumstat/", trait.name.vector[1326:1366], '.sumstats.gz'),
   ld = "~/mrSEM/data/eur_w_ld_chr",
   wld = "~/mrSEM/data/eur_w_ld_chr",
@@ -45,13 +42,20 @@ LDSCoutput_IDP_1326_1366 <- ldsc(
   chisq.max = NA
 )
 
+require(pheatmap)
 pheatmap(
   LDSCoutput_IDP$S,
   cluster_rows = TRUE,
   cluster_cols = TRUE,
   clustering_distance_rows = "euclidean",
   clustering_distance_cols = "euclidean",
-  clustering_method = "single"
+  clustering_method = "single",
+  # annotation_row = data.frame(Traits = c("F1", "F1", "F1", "F2", "F1", "F3", "F3", "F3", "F2", "F3", "F1", "F2"), row.names = rownames(IDP.corMatirx)),
+  # annotation_col = data.frame(Traits = c("F1", "F1", "F1", "F2", "F1", "F3", "F3", "F3", "F2", "F3", "F1", "F2"), row.names = colnames(IDP.corMatirx)),
+  main = "Hierarchical clustering and spectral clustering for \n genetic correlation matrix of imaging-derived phenotypes ",
+  fontsize = 8,
+  fontsize_row = 6,
+  fontsize_col = 6
 )
 
 IDP.CFTree.2 <- BirchCF(x=as.data.frame(LDSCoutput_IDP_1326_1366$S), Type = 'df', branchingfactor = 4, threshold = 0.4)

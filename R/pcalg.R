@@ -7,7 +7,7 @@
 #'
 #' @return Re-sampled genetic covariance matrix, # of matrix = rep
 #' @export
-CLusterSEM.suffStat <- function(suffStat,
+ClusterSEM.suffStat <- function(suffStat,
                           seed = NULL,
                           rep = 250) {
   set.seed(seed = seed)
@@ -35,7 +35,7 @@ CLusterSEM.suffStat <- function(suffStat,
 #'
 #' @return p value indicating independence between x and y
 #' @export
-CLusterSEM.indepTest <- function(suffStat, x, y, S) {
+ClusterSEM.indepTest <- function(x, y, S, suffStat) {
   if (is.null(suffStat$S)) {
     sig <- matrix(NA, nrow(suffStat$S_Full), ncol(suffStat$S_Full))
   } else {

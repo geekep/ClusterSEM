@@ -38,22 +38,23 @@ anthro <- ldsc(
   trait.names <- c("BMI", "WHR", "CO", "Waist", "Hip", "Height", "IHC", "BL", "BW")
 )
 
+require(Matirx)
 # Convert genetic covariance matrix (i.e. S) to correlation matrix
 anthro.corMatirx <- cov2cor(anthro[["S"]])
 rownames(anthro.corMatirx) <- colnames(anthro[["S"]])
 
 # Confirm the number of latent variables using hierarchical clustering
-# In stats package, hclust method parameter: ward.D, ward.D2, single, complete, average, mcquitty, median, centroid
+# In stats package, hclust method optional parameter: ward.D, ward.D2, single, complete, average, mcquitty, median, centroid
 require(stats)
 hclustTree <- stats::hclust(d = as.dist((1 - anthro.corMatirx) / 2), method = "complete")
 plot(hclustTree,
      main = "Hierarchical clustering for 9 anthropometric traits",
      xlab = 'Traits',
-     ylab = '(1-Correlation_coefficient)/2',
+     ylab = 'Similarity [i.o. (1-Cor_coef)/2]',
      hang = -1)
 
 # Confirm the number of latent variables using hierarchical clustering
-# In pheatmap package, pheatmap method parameter is similar to the above stats::hclust method parameter option.
+# In pheatmap package, pheatmap clustering_method parameter is similar to the above stats::hclust method parameter option.
 require(pheatmap)
 pheatmap::pheatmap(
   anthro.corMatirx,
@@ -83,15 +84,22 @@ require(kernlab)
 kernelMatrix <- as.kernelMatrix(anthro.corMatirx, center=FALSE)
 sc <- specc(x=kernelMatrix, centers=2, data=NULL, na.action = na.omit)
 
-# Hierarchical Exploratory Factor Analysis (EFA) using BIRCH clustering
-anthro.CFTree <- BirchCF(x=as.data.frame(anthro.corMatirx), Type = 'df', branchingfactor = 4, threshold = 0.4)
+# Hierarchical Exploratory Factor Analysis (H-EFA) using BIRCH clustering
+anthro.CFTree <-
+  BirchCF(
+    x = as.data.frame(anthro.corMatirx),
+    Type = 'df',
+    branchingfactor = 4,
+    threshold = 0.4
+  )
 
 # Specify the genomic confirmatory factor model
 CFAofEFA <- 'F1 =~ NA*BMI + WHR + CO + Waist + Hip
              F2 =~ NA*Height + IHC + BL + BW
-F1 ~~ F2
-Waist ~~ a*Waist
-a > .001'
+             
+             F1 ~~ F2
+             Waist ~~ a*Waist
+             a > .001'
 
 # Confirmatory factor analysis (CFA) based on specified the genomic confirmatory factor model
 anthro.CFA <- usermodel(anthro, estimation = "DWLS", model = CFAofEFA, CFIcalc = TRUE, std.lv = TRUE, imp_cov = TRUE)
