@@ -3,6 +3,6 @@
 .Rhistory
 .RData
 .Ruserdata
-mrSEM.Rproj
+*.Rproj
 data/*
 inst/extdata/*
