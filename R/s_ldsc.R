@@ -9,7 +9,7 @@
 #' @param frq A folder of allele frequency files.
 #' @param trait.names A character vector specifying how the traits should be named. These variable names can subsequently be used in later steps for model specification.
 #' @param n.blocks Number of blocks to use for the jacknive procedure which is used to estiamte entries in V, higher values will be optimal if you have a large number of variables and also slower, defaults to 200.
-#' @param ldsc.log What to name the .log file if you want to override default to name file based on file names used as input.
+#' @param ldsc.log What to name the .log file if you want to override. Default to name file based on file names used as input.
 #' @param exclude_cont Whether to exclude continuous annotations from S-LDSC estimation.
 #'
 #' @return The function returns a list with 9 named entries

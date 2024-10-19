@@ -4,7 +4,13 @@
 \alias{write.model}
 \title{Automate writing lavaan model syntax based on clustering output}
 \usage{
-write.model(clusters, S_LD, fix_resid = TRUE, common = FALSE)
+write.model(
+  clusters,
+  S_LD,
+  fix_resid = TRUE,
+  common = FALSE,
+  hierarchical = FALSE
+)
 }
 \arguments{
 \item{clusters}{Output from various clustering algorithms}
@@ -14,6 +20,8 @@ write.model(clusters, S_LD, fix_resid = TRUE, common = FALSE)
 \item{fix_resid}{default to TRUE}
 
 \item{common}{Whether to specify a common factor model, default to FALSE}
+
+\item{hierarchical}{Whether to specify a hierarchical exploratory factor model, default to FALSE}
 }
 \value{
 lavaan model syntax satisfying clusters

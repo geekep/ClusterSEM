@@ -31,7 +31,7 @@ ldsc(
 
 \item{wld}{String which contains the path to the folder in which the LD score weights used in the analysis are located}
 
-\item{trait.names}{A character vector specifying how the traits should be named in the genetic covariance (S) matrix. These variable names can subsequently be used in later steps for model specification. If no value is provided, the function will automatically name the variables using the generic from of V1-VX.}
+\item{trait.names}{A character vector specifying how the traits should be named in the genetic covariance matrix (i.o. S). These variable names can subsequently be used in later steps for model specification. If no value is provided, the function will automatically name the variables using the generic from of V1-VX.}
 
 \item{sep_weights}{Logical which indicates whether the weights are different form the LD scores used for the regression, defaults to FALSE.}
 
@@ -39,9 +39,9 @@ ldsc(
 
 \item{n.blocks}{defaults to 200}
 
-\item{ldsc.log}{defaults to NULL}
+\item{ldsc.log}{What to name the .log file if you want to override. Default to name file based on file names used as input.}
 
-\item{stand}{If you want to output the standard errors (SE) of the ld-score regression in the order they are listed in the genetic covariance (i.e., S) matrix. Default to TRUE.}
+\item{stand}{If you want to output the standard errors (SE) of the ld-score regression in the order they are listed in the genetic covariance matrix (i.e., S). Default to TRUE.}
 
 \item{select}{default to FALSE}
 

@@ -31,9 +31,9 @@ munge(
 
 \item{maf.filter}{Numeric value used as a lower bound for minor allele frequency}
 
-\item{log.name}{default to NULL}
+\item{log.name}{What to name the .log file if you want to override. Default to name file based on file names used as input.}
 
-\item{column.names}{column.names is a list(SNP, A1, A2, effect, P, MAF, Z) to specify other name}
+\item{column.names}{column.names is a list (SNP, A1, A2, effect, P, MAF, Z) to specify other name}
 
 \item{parallel}{default to FALSE}
 

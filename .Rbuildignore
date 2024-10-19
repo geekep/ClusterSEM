@@ -4,3 +4,4 @@
 ^\.Rhistory$
 ^\.log$
 ^data$
+^inst$

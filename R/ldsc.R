@@ -1,17 +1,17 @@
 #' Estimate a genetic covariance structure using multivariate LD score regression
 #' @description Function to run LD score regression (https://github.com/bulik/ldsc) to compute the genetic covariance between a series of traits based on genome wide summary statistics obtained from GWAS.
-#' 
+#'
 #' @param traits A vector of strings which point to LDSC munged files for trait you want to include in a SEM model
 #' @param sample.prev A vector of sample prevalence for dichotomous traits and NA for continuous traits
 #' @param population.prev A vector of population prevalence for dichotomous traits and NA for continuous traits
 #' @param ld String which contains the path to the folder in which the LD scores used in the analysis are located.
 #' @param wld String which contains the path to the folder in which the LD score weights used in the analysis are located
-#' @param trait.names A character vector specifying how the traits should be named in the genetic covariance (S) matrix. These variable names can subsequently be used in later steps for model specification. If no value is provided, the function will automatically name the variables using the generic from of V1-VX.
+#' @param trait.names A character vector specifying how the traits should be named in the genetic covariance matrix (i.o. S). These variable names can subsequently be used in later steps for model specification. If no value is provided, the function will automatically name the variables using the generic from of V1-VX.
 #' @param sep_weights Logical which indicates whether the weights are different form the LD scores used for the regression, defaults to FALSE.
 #' @param chr defaults to 22
 #' @param n.blocks defaults to 200
-#' @param ldsc.log defaults to NULL
-#' @param stand If you want to output the standard errors (SE) of the ld-score regression in the order they are listed in the genetic covariance (i.e., S) matrix. Default to TRUE.
+#' @param ldsc.log What to name the .log file if you want to override. Default to name file based on file names used as input.
+#' @param stand If you want to output the standard errors (SE) of the ld-score regression in the order they are listed in the genetic covariance matrix (i.e., S). Default to TRUE.
 #' @param select default to FALSE
 #' @param chisq.max default to NA
 #'
@@ -25,11 +25,11 @@
 ldsc <- function(traits, sample.prev, population.prev, ld, wld,
                 trait.names = NULL, sep_weights = FALSE, chr = 22,
                 n.blocks = 200, ldsc.log = NULL, stand = TRUE, select=FALSE,chisq.max = NA) {
-  
+
   time <- proc.time()
-  
+
   begin.time <- Sys.time()
-  
+
   if(is.null(ldsc.log)){
     logtraits<-gsub(".*/","",traits)
     log2<-paste(logtraits,collapse="_")
@@ -38,18 +38,18 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
     }
     log.file <- file(paste0(log2, "_ldsc.log"),open="wt")
   }else{log.file<-file(paste0(ldsc.log, "_ldsc.log"),open="wt")}
-  
+
   .LOG("Multivariate ld-score regression of ", length(traits), " traits ", "(", paste(traits, collapse = " "), ")", " began at: ", begin.time, file=log.file)
-  
+
   if(select == "ODD" | select == "EVEN"){
     odd<-seq(1,chr,2)
     even<-seq(2,chr,2)
   }
-  
+
   # Dimensions
   n.traits <- length(traits)
   n.V <- n.traits * (n.traits + 1) / 2
-  
+
   if(n.traits > 18){
     n.blocks<-(((n.traits+1)*(n.traits+2))/2)+1
     .LOG("     ", file=log.file, print = FALSE)
@@ -265,13 +265,13 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
         N.bar <- mean(merged$N)
 
 
-        ## preweight LD and chi:
+        ## pre-weight LD and chi:
 
         weighted.LD <- as.matrix(cbind(merged$L2,merged$intercept)*merged$weights)
         weighted.chi <- as.matrix(merged$chi1*merged$weights)
 
 
-        ## Perfrom analysis:
+        ## Perform analysis:
 
         n.annot <- 1
 
@@ -408,12 +408,12 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
 
         N.bar <- sqrt(mean(merged$N.x)*mean(merged$N.y))
 
-        ## preweight LD and chi:
+        ## pre-weight LD and chi:
 
         weighted.LD <- as.matrix(cbind(merged$L2,merged$intercept)*merged$weights)
         weighted.chi <- as.matrix(merged$ZZ *merged$weights_cov)
 
-        ## Perfrom analysis:
+        ## Perform analysis:
 
 
         n.annot <- 1
@@ -534,70 +534,121 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
     }
   }
 
-
-  if(all(diag(S) > 0)){
-
-    ##calculate standardized results to print genetic correlations to log and screen
-    ratio <- tcrossprod(1 / sqrt(diag(S)))
-    S_Stand <- S * ratio
-
-    #calculate the ratio of the rescaled and original S matrices
-    scaleO <- gdata::lowerTriangle(ratio, diag = TRUE)
-
-    ## MAke sure that if ratio in NaN (devision by zero) we put the zero back in
-    # -> not possible because of 'all(diag(S) > 0)'
-    # scaleO[is.nan(scaleO)] <- 0
-
-    #rescale the sampling correlation matrix by the appropriate diagonals
-    V_Stand <- V * tcrossprod(scaleO)
-
-    #enter SEs from diagonal of standardized V
-    r<-nrow(S)
-    SE_Stand<-matrix(0, r, r)
-    SE_Stand[lower.tri(SE_Stand,diag=TRUE)] <- sqrt(diag(V_Stand))
-
-
-    .LOG(c("     ", "     "), file=log.file, print = FALSE)
-    .LOG("Genetic Correlation Results", file=log.file)
-
-    for(j in 1:n.traits){
-      if(is.null(trait.names)){
-        chi1<-traits[j]
-      }else{chi1 <- trait.names[j]}
-      for(k in j:length(traits)){
-        if(j != k){
-          if(is.null(trait.names)){
-            chi2<-traits[k]
-          }else{chi2 <- trait.names[k]}
-          .LOG("Genetic Correlation between ", chi1, " and ", chi2, ": ",
-              round(S_Stand[k, j], 4), " (", round(SE_Stand[k, j], 4), ")", file=log.file)
-          .LOG("     ", file=log.file, print = FALSE)
-        }
-      }
-    }
-  }else{
-    warning("Your genetic covariance matrix includes traits estimated to have a negative heritability.")
-    .LOG("Your genetic covariance matrix includes traits estimated to have a negative heritability.", file=log.file, print = FALSE)
-    .LOG("Genetic correlation results could not be computed due to negative heritability estimates.", file=log.file)
-  }
-
   end.time <- Sys.time()
-
+  
   total.time <- difftime(time1=end.time,time2=begin.time,units="sec")
   mins <- floor(floor(total.time)/60)
   secs <- floor(total.time-mins*60)
-
+  
   .LOG("     ", file=log.file, print = FALSE)
   .LOG("LDSC finished running at ", end.time, file=log.file)
   .LOG("Running LDSC for all files took ", mins, " minutes and ", secs, " seconds", file=log.file)
   .LOG("     ", file=log.file, print = FALSE)
-
+  
   flush(log.file)
   close(log.file)
 
-  if(stand){
-    list(V=V,S=S,I=I,N=N.vec,m=m,V_Stand=V_Stand,S_Stand=S_Stand)
-  } else {
-    list(V=V,S=S,I=I,N=N.vec,m=m)
+  if(all(diag(S) > 0)){
+
+    if(stand){
+      ##calculate standardized results to print genetic correlations to log and screen
+      ratio <- tcrossprod(1 / sqrt(diag(S)))
+      S_Stand <- S * ratio
+      
+      #calculate the ratio of the re-scaled and original S matrices
+      scaleO <- gdata::lowerTriangle(ratio, diag = TRUE)
+      
+      ## Make sure that if ratio in NaN (division by zero) we put the zero back in
+      # -> not possible because of 'all(diag(S) > 0)'
+      # scaleO[is.nan(scaleO)] <- 0
+      
+      #re-scale the sampling correlation matrix by the appropriate diagonals
+      V_Stand <- V * tcrossprod(scaleO)
+      
+      #enter SEs from diagonal of standardized V
+      r<-nrow(S)
+      SE_Stand<-matrix(0, r, r)
+      SE_Stand[lower.tri(SE_Stand,diag=TRUE)] <- sqrt(diag(V_Stand))
+      
+      
+      .LOG(c("     ", "     "), file=log.file, print = FALSE)
+      .LOG("Genetic Correlation Results", file=log.file)
+      
+      for(j in 1:n.traits){
+        if(is.null(trait.names)){
+          chi1<-traits[j]
+        }else{chi1 <- trait.names[j]}
+        for(k in j:length(traits)){
+          if(j != k){
+            if(is.null(trait.names)){
+              chi2<-traits[k]
+            }else{chi2 <- trait.names[k]}
+            .LOG("Genetic Correlation between ", chi1, " and ", chi2, ": ",
+                 round(S_Stand[k, j], 4), " (", round(SE_Stand[k, j], 4), ")", file=log.file)
+            .LOG("     ", file=log.file, print = FALSE)
+          }
+        }
+      }
+      
+      return(list(V=V,S=S,I=I,N=N.vec,m=m,V_Stand=V_Stand,S_Stand=S_Stand))
+      
+    } else {
+      return(list(V=V,S=S,I=I,N=N.vec,m=m))
+    }
+    
+  }else{
+    warning("Your genetic covariance matrix includes traits estimated to have a negative heritability.")
+    .LOG("Your genetic covariance matrix includes traits estimated to have a negative heritability.", file=log.file, print = FALSE)
+    .LOG("Genetic correlation results could be computed by the nearPD function in the Matrix package.", file=log.file)
+    
+    if(stand){
+      
+      #smooth the genetic covariance matrix S using the nearPD function in the Matrix package
+      Ssmooth <- Matrix::as.matrix((Matrix::nearPD(S, corr = FALSE))$mat)
+      ##calculate standardized results to print genetic correlations to log and screen
+      ratio <- tcrossprod(1 / sqrt(diag(Ssmooth)))
+      S_Stand <- Ssmooth * ratio
+      
+      #calculate the ratio of the re-scaled and original S matrices
+      scaleO <- gdata::lowerTriangle(ratio, diag = TRUE)
+      
+      ## Make sure that if ratio in NaN (division by zero) we put the zero back in
+      # -> not possible because of 'all(diag(S) > 0)'
+      # scaleO[is.nan(scaleO)] <- 0
+      
+      #re-scale the sampling correlation matrix by the appropriate diagonals
+      V_Stand <- V * tcrossprod(scaleO)
+      
+      #enter SEs from diagonal of standardized V
+      r<-nrow(Ssmooth)
+      SE_Stand<-matrix(0, r, r)
+      SE_Stand[lower.tri(SE_Stand,diag=TRUE)] <- sqrt(diag(V_Stand))
+      
+      
+      .LOG(c("     ", "     "), file=log.file, print = FALSE)
+      .LOG("Genetic Correlation Results", file=log.file)
+      
+      for(j in 1:n.traits){
+        if(is.null(trait.names)){
+          chi1<-traits[j]
+        }else{chi1 <- trait.names[j]}
+        for(k in j:length(traits)){
+          if(j != k){
+            if(is.null(trait.names)){
+              chi2<-traits[k]
+            }else{chi2 <- trait.names[k]}
+            .LOG("Genetic Correlation between ", chi1, " and ", chi2, ": ",
+                 round(S_Stand[k, j], 4), " (", round(SE_Stand[k, j], 4), ")", file=log.file)
+            .LOG("     ", file=log.file, print = FALSE)
+          }
+        }
+      }
+      
+      return(list(V=V,S=S,Ssmooth=Ssmooth,I=I,N=N.vec,m=m,V_Stand=V_Stand,S_Stand=S_Stand))
+      
+    } else {
+      return(list(V=V,S=S,I=I,N=N.vec,m=m))
+    }
+    
   }
 }

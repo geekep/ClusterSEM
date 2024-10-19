@@ -21,7 +21,7 @@ hdl(
 
 \item{population.prev}{A vector of population prevalence for dichotomous traits and NA for continuous traits}
 
-\item{trait.names}{A character vector specifying how the traits should be named in the genetic covariance (S) matrix. These variable names can subsequently be used in later steps for model specification. If no value is provided, the function will automatically name the variables using the generic from of V1-VX.}
+\item{trait.names}{A character vector specifying how the traits should be named in the genetic covariance matrix (i.o. S). These variable names can subsequently be used in later steps for model specification. If no value is provided, the function will automatically name the variables using the generic from of V1-VX.}
 
 \item{LD.path}{String which contains the path to the folder in which the LD matrices used in the analysis are located.}
 

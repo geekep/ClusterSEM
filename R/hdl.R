@@ -4,7 +4,7 @@
 #' @param traits A vector of strings which point to munged files for trait you want to include in a SEM model. The HDL function works with standard munged files.
 #' @param sample.prev A vector of sample prevalence for dichotomous traits and NA for continuous traits
 #' @param population.prev A vector of population prevalence for dichotomous traits and NA for continuous traits
-#' @param trait.names A character vector specifying how the traits should be named in the genetic covariance (S) matrix. These variable names can subsequently be used in later steps for model specification. If no value is provided, the function will automatically name the variables using the generic from of V1-VX.
+#' @param trait.names A character vector specifying how the traits should be named in the genetic covariance matrix (i.o. S). These variable names can subsequently be used in later steps for model specification. If no value is provided, the function will automatically name the variables using the generic from of V1-VX.
 #' @param LD.path String which contains the path to the folder in which the LD matrices used in the analysis are located.
 #' @param Nref Sample size of the reference file, default is 335265
 #' @param method String, either "piecewise" which estimates the heritability or genetic covariance locally in chunks across the genome and then sums these estimates, or "jackknife" which uses a genome wide estiamte and uses a jackknife estimator for the variance of the parameter. defaults to "piecewise" the original HDL implementation is equal to "jackknife"

@@ -34,7 +34,7 @@ s_ldsc(
 
 \item{n.blocks}{Number of blocks to use for the jacknive procedure which is used to estiamte entries in V, higher values will be optimal if you have a large number of variables and also slower, defaults to 200.}
 
-\item{ldsc.log}{What to name the .log file if you want to override default to name file based on file names used as input.}
+\item{ldsc.log}{What to name the .log file if you want to override. Default to name file based on file names used as input.}
 
 \item{exclude_cont}{Whether to exclude continuous annotations from S-LDSC estimation.}
 }

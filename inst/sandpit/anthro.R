@@ -46,7 +46,7 @@ rownames(anthro.corMatirx) <- colnames(anthro[["S"]])
 # Confirm the number of latent variables using hierarchical clustering
 # In stats package, hclust method optional parameter: ward.D, ward.D2, single, complete, average, mcquitty, median, centroid
 require(stats)
-hclustTree <- stats::hclust(d = as.dist((1 - anthro.corMatirx) / 2), method = "complete")
+hclustTree <- hclust(d = as.dist((1 - anthro.corMatirx) / 2), method = "complete")
 plot(hclustTree,
      main = "Hierarchical clustering for 9 anthropometric traits",
      xlab = 'Traits',
@@ -56,7 +56,7 @@ plot(hclustTree,
 # Confirm the number of latent variables using hierarchical clustering
 # In pheatmap package, pheatmap clustering_method parameter is similar to the above stats::hclust method parameter option.
 require(pheatmap)
-pheatmap::pheatmap(
+pheatmap(
   anthro.corMatirx,
   cluster_rows = TRUE,
   cluster_cols = TRUE,
@@ -72,12 +72,12 @@ pheatmap::pheatmap(
 )
 
 # Exploratory Factor Analysis (EFA) using PCA and factor axis rotation
-require(stats)
 require(Matrix)
 #In the Matrix package, smooth the anthro.corMatirx matrix for EFA using the nearPD function. 
 Ssmooth <- as.matrix((nearPD(anthro.corMatirx, corr = FALSE))$mat)
+require(stats)
 #In the stats package, run EFA with promax rotation and 2 factors using the factanal function
-EFA <- stats::factanal(covmat = Ssmooth, factors = 2, rotation = "promax")
+EFA <- factanal(covmat = Ssmooth, factors = 2, rotation = "promax")
 
 # Exploratory Factor Analysis (EFA) using spectral clustering
 require(kernlab)

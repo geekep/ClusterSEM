@@ -5,6 +5,7 @@
 #' @param S_LD Genetic covariance matrix
 #' @param fix_resid default to TRUE
 #' @param common Whether to specify a common factor model, default to FALSE
+#' @param hierarchical Whether to specify a hierarchical exploratory factor model, default to FALSE
 #'
 #' @return lavaan model syntax satisfying clusters
 #' @export
@@ -12,7 +13,8 @@ write.model <-
   function(clusters,
            S_LD,
            fix_resid = TRUE,
-           common = FALSE) {
+           common = FALSE,
+           hierarchical = FALSE) {
     Model <- ""
     if (common == TRUE) {
       for (f in 1) {
@@ -47,6 +49,10 @@ write.model <-
         linestart <- ""
         linemid <- ""
       }
+    }
+    
+    if (hierarchical  == TRUE) {
+      model4 = ""
     }
     
     if (fix_resid == TRUE) {

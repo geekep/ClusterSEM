@@ -130,7 +130,7 @@ rownames(neuroticism.corMatirx) <- colnames(neuroticism[["S"]])
 # Confirm the number of latent variables using hierarchical clustering
 # In stats package, hclust method optional parameter: ward.D, ward.D2, single, complete, average, mcquitty, median, centroid
 require(stats)
-hclustTree <- stats::hclust(d = as.dist((1 - neuroticism.corMatirx) / 2), method = "complete")
+hclustTree <- hclust(d = as.dist((1 - neuroticism.corMatirx) / 2), method = "complete")
 plot(hclustTree,
      main = "Hierarchical clustering for 12 neuroticism traits",
      xlab = 'Traits',
@@ -156,12 +156,12 @@ pheatmap(
 )
 
 # Exploratory Factor Analysis (EFA) using PCA and factor axis rotation
-require(stats)
 require(Matrix)
 #In the Matrix package, smooth the neuroticism.corMatirx matrix for EFA using the nearPD function. 
 Ssmooth <- as.matrix((nearPD(neuroticism$S, corr = FALSE))$mat)
+require(stats)
 #In the stats package, run EFA with promax rotation and 3 factors using the factanal function 
-EFA <- stats::factanal(covmat = Ssmooth, factors = 3, rotation = "promax")
+EFA <- factanal(covmat = Ssmooth, factors = 3, rotation = "promax")
 
 # Exploratory Factor Analysis (EFA) using spectral clustering
 require(kernlab)
@@ -180,4 +180,4 @@ CFAofEFA <- 'F1 =~ NA*mood + misery + fedup +lonely + irritability
              F3 =~ NA*tense + nerves + nervous + worry'
 
 # Confirmatory factor analysis (CFA) based on specified the genomic confirmatory factor model
-neuroticism.CFA <- usermodel(anthro, estimation = "DWLS", model = CFAofEFA, CFIcalc = TRUE, std.lv = TRUE, imp_cov = TRUE)
+neuroticism.CFA <- usermodel(neuroticism, estimation = "DWLS", model = CFAofEFA, CFIcalc = TRUE, std.lv = TRUE, imp_cov = TRUE)

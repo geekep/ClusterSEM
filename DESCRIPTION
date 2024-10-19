@@ -1,4 +1,4 @@
-Package: mrSEM
+Package: ClusterSEM
 Type: Package
 Title: Confirmatory factor analysis based on GWAS summary statistics
 Version: 1.0

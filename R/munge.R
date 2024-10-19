@@ -7,8 +7,8 @@
 #' @param N default to NULL
 #' @param info.filter Numeric value which is used as a lower bound for imputation quality (INFO)
 #' @param maf.filter Numeric value used as a lower bound for minor allele frequency
-#' @param log.name default to NULL
-#' @param column.names column.names is a list(SNP, A1, A2, effect, P, MAF, Z) to specify other name
+#' @param log.name What to name the .log file if you want to override. Default to name file based on file names used as input.
+#' @param column.names column.names is a list (SNP, A1, A2, effect, P, MAF, Z) to specify other name
 #' @param parallel default to FALSE
 #' @param cores default to NULL
 #' @param overwrite default to TRUE
