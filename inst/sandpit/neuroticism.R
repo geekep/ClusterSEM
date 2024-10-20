@@ -1,20 +1,20 @@
 #munge the summary statistics
 munge(
   files = c(
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/mood.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/misery.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/irrit.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/hurt.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/fedup.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/nervous.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/worry.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/tense.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/embarras.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/nerves.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/lonely.txt",
-    "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/guilt.txt"
+    "~/R-workspace/UKBB_GWAS_Imputed_v3/mood.txt",
+    "~/R-workspace/UKBB_GWAS_Imputed_v3/misery.txt",
+    "~/R-workspace/UKBB_GWAS_Imputed_v3/irrit.txt",
+    "~/R-workspace/UKBB_GWAS_Imputed_v3/hurt.txt",
+    "~/R-workspace/UKBB_GWAS_Imputed_v3/fedup.txt",
+    "~/R-workspace/UKBB_GWAS_Imputed_v3/nervous.txt",
+    "~/R-workspace/UKBB_GWAS_Imputed_v3/worry.txt",
+    "~/R-workspace/UKBB_GWAS_Imputed_v3/tense.txt",
+    "~/R-workspace/UKBB_GWAS_Imputed_v3/embarras.txt",
+    "~/R-workspace/UKBB_GWAS_Imputed_v3/nerves.txt",
+    "~/R-workspace/UKBB_GWAS_Imputed_v3/lonely.txt",
+    "~/R-workspace/UKBB_GWAS_Imputed_v3/guilt.txt"
   ),
-  hm3 = "~/mrSEM/data/eur_w_ld_chr/w_hm3.snplist",
+  hm3 = "~/R-workspace/eur_w_ld_chr/w_hm3.snplist",
   trait.names = c(
     "mood",
     "misery",
@@ -55,21 +55,21 @@ munge(
 neuroticism <- ldsc(
   traits =
     c(
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/mood.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/misery.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/irrit.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/hurt.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/fedup.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/nervous.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/worry.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/tense.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/embarass.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/nerves.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/lonely.sumstats.gz",
-      "~/mrSEM/data/sumstats/UKBB_GWAS_Imputed_v3/guilt.sumstats.gz"
+      "~/R-workspace/UKBB_GWAS_Imputed_v3/mood.sumstats.gz",
+      "~/R-workspace/UKBB_GWAS_Imputed_v3/misery.sumstats.gz",
+      "~/R-workspace/UKBB_GWAS_Imputed_v3/irrit.sumstats.gz",
+      "~/R-workspace/UKBB_GWAS_Imputed_v3/hurt.sumstats.gz",
+      "~/R-workspace/UKBB_GWAS_Imputed_v3/fedup.sumstats.gz",
+      "~/R-workspace/UKBB_GWAS_Imputed_v3/nervous.sumstats.gz",
+      "~/R-workspace/UKBB_GWAS_Imputed_v3/worry.sumstats.gz",
+      "~/R-workspace/UKBB_GWAS_Imputed_v3/tense.sumstats.gz",
+      "~/R-workspace/UKBB_GWAS_Imputed_v3/embarass.sumstats.gz",
+      "~/R-workspace/UKBB_GWAS_Imputed_v3/nerves.sumstats.gz",
+      "~/R-workspace/UKBB_GWAS_Imputed_v3/lonely.sumstats.gz",
+      "~/R-workspace/UKBB_GWAS_Imputed_v3/guilt.sumstats.gz"
     ),
-  ld = "~/mrSEM/data/eur_w_ld_chr",
-  wld = "~/mrSEM/data/eur_w_ld_chr",
+  ld = "~/R-workspace/eur_w_ld_chr",
+  wld = "~/R-workspace/eur_w_ld_chr",
   sample.prev = c(
     .451,
     .427,
@@ -116,16 +116,16 @@ neuroticism <- ldsc(
   sep_weights = FALSE,
   chr = 22,
   n.blocks = 200,
-  ldsc.log = NULL,
-  stand = FALSE,
+  ldsc.log = 'neuroticism',
+  stand = TRUE,
   select = FALSE,
   chisq.max = NA
 )
 
 require(Matirx)
 # Convert genetic covariance matrix (i.e. S) to correlation matrix
+rownames(neuroticism[["S"]]) <- colnames(neuroticism[["S"]])
 neuroticism.corMatirx <- cov2cor(neuroticism[["S"]])
-rownames(neuroticism.corMatirx) <- colnames(neuroticism[["S"]])
 
 # Confirm the number of latent variables using hierarchical clustering
 # In stats package, hclust method optional parameter: ward.D, ward.D2, single, complete, average, mcquitty, median, centroid

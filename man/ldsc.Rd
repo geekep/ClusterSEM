@@ -56,7 +56,7 @@ V  variance covariance matrix of the parameter estimates in S
 
 I  matrix containing the "cross trait intercepts", or the error covariance between traits induced by overlap, in terms of subjects, between the GWAS on which the analyses are based
 
-N  a vector containing the sample size (for the genetic variances) and the geometric mean of sample sizes (i.e. sqrt(N1,N2)) between two samples for the covariance
+N  a vector containing the sample size (for the genetic variances) and the geometric mean of sample sizes (i.e. sqrt(N1*N2)) between two samples for the covariance
 
 m  number of SNPs used to compute the LD scores
 }

@@ -1,4 +1,4 @@
-IDP.path <- '~/R-workspace/IDP'
+IDP.path <- '~/R-workspace/IDP/'
 IDP.N <- c()
 
 #munge the summary statistics
@@ -17,7 +17,7 @@ munge(
 
 # ldsc
 IDP.Cat.4 <- ldsc(
-  traits = paste0(IDP.path, '/', c(1326:1366), '.sumstats.gz'),
+  traits = paste0(IDP.path, c(1326:1366), '.sumstats.gz'),
   ld = "~/R-workspace/eur_w_ld_chr",
   wld = "~/R-workspace/eur_w_ld_chr",
   sample.prev = rep(NA, length(c(1326:1366))),
@@ -34,8 +34,8 @@ IDP.Cat.4 <- ldsc(
 
 # Convert genetic covariance matrix (i.e. S) to correlation matrix
 require(Matrix)
+rownames(IDP.Cat.4$Ssmooth) <- colnames(IDP.Cat.4$Ssmooth)
 IDP.Cat.4.corMatirx <- cov2cor(IDP.Cat.4$Ssmooth)
-rownames(IDP.Cat.4.corMatirx) <- colnames(IDP.Cat.4$Ssmooth)
 
 # Exploratory Factor Analysis (EFA) using PCA and factor axis rotation
 require(stats)

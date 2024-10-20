@@ -19,7 +19,7 @@
 #' @return S  estimated genetic covariance matrix
 #' @return V  variance covariance matrix of the parameter estimates in S
 #' @return I  matrix containing the "cross trait intercepts", or the error covariance between traits induced by overlap, in terms of subjects, between the GWAS on which the analyses are based
-#' @return N  a vector containing the sample size (for the genetic variances) and the geometric mean of sample sizes (i.e. sqrt(N1,N2)) between two samples for the covariance
+#' @return N  a vector containing the sample size (for the genetic variances) and the geometric mean of sample sizes (i.e. sqrt(N1*N2)) between two samples for the covariance
 #' @return m  number of SNPs used to compute the LD scores
 #' @export
 ldsc <- function(traits, sample.prev, population.prev, ld, wld,
@@ -544,9 +544,6 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
   .LOG("LDSC finished running at ", end.time, file=log.file)
   .LOG("Running LDSC for all files took ", mins, " minutes and ", secs, " seconds", file=log.file)
   .LOG("     ", file=log.file, print = FALSE)
-  
-  flush(log.file)
-  close(log.file)
 
   if(all(diag(S) > 0)){
 
@@ -590,7 +587,10 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
         }
       }
       
-      return(list(V=V,S=S,I=I,N=N.vec,m=m,V_Stand=V_Stand,S_Stand=S_Stand))
+      flush(log.file)
+      close(log.file)
+      
+      return(list(V=V,S=S,I=I,N=N.vec,m=m,V_Stand=V_Stand,S_Stand=S_Stand,SE_Stand=SE_Stand))
       
     } else {
       return(list(V=V,S=S,I=I,N=N.vec,m=m))
@@ -644,7 +644,10 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
         }
       }
       
-      return(list(V=V,S=S,Ssmooth=Ssmooth,I=I,N=N.vec,m=m,V_Stand=V_Stand,S_Stand=S_Stand))
+      flush(log.file)
+      close(log.file)
+      
+      return(list(V=V,S=S,Ssmooth=Ssmooth,I=I,N=N.vec,m=m,V_Stand=V_Stand,S_Stand=S_Stand,SE_Stand=SE_Stand))
       
     } else {
       return(list(V=V,S=S,I=I,N=N.vec,m=m))

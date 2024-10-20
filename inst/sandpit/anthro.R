@@ -8,7 +8,7 @@ munge(c("~/mrSEM/data/sumstats/GIANT/SNP_gwas_mc_merge_nogc.tbl.uniq",
         "~/mrSEM/data/sumstats/EGG/EGG_HC_DISCOVERY.v2.txt",
         "~/mrSEM/data/sumstats/EGG/EGG-GWAS-BL.txt",
         "~/mrSEM/data/sumstats/EGG/EGG_BW2_DISCOVERY.txt"),
-      hm3 = "~/mrSEM/data/eur_w_ld_chr/w_hm3.snplist",
+      hm3 = "~/R-workspace/eur_w_ld_chr/w_hm3.snplist",
       trait.names = c("BMI2015", "waisthip", "childobese", "hip", "waist", "height", "headcirc", "birthlength", "birthweight"),
       N = c(NA, NA, 13848, NA, NA, NA, NA, NA, 26836),
       info.filter = 0.9,
@@ -21,27 +21,34 @@ munge(c("~/mrSEM/data/sumstats/GIANT/SNP_gwas_mc_merge_nogc.tbl.uniq",
 #run multivariate LDSC to create the S and V matrices
 anthro <- ldsc(
   traits <- c(
-    "~/mrSEM/data/sumstats/Anthro/BMI2015.sumstats.gz",
-    "~/mrSEM/data/sumstats/Anthro/waisthip.sumstats.gz",
-    "~/mrSEM/data/sumstats/Anthro/childobese.sumstats.gz",
-    "~/mrSEM/data/sumstats/Anthro/waist.sumstats.gz",
-    "~/mrSEM/data/sumstats/Anthro/hip.sumstats.gz",
-    "~/mrSEM/data/sumstats/Anthro/height.sumstats.gz",
-    "~/mrSEM/data/sumstats/Anthro/headcirc.sumstats.gz",
-    "~/mrSEM/data/sumstats/Anthro/birthlength.sumstats.gz",
-    "~/mrSEM/data/sumstats/Anthro/birthweight.sumstats.gz"
+    "~/R-workspace/Anthro/BMI2015.sumstats.gz",
+    "~/R-workspace/Anthro/waisthip.sumstats.gz",
+    "~/R-workspace/Anthro/childobese.sumstats.gz",
+    "~/R-workspace/Anthro/waist.sumstats.gz",
+    "~/R-workspace/Anthro/hip.sumstats.gz",
+    "~/R-workspace/Anthro/height.sumstats.gz",
+    "~/R-workspace/Anthro/headcirc.sumstats.gz",
+    "~/R-workspace/Anthro/birthlength.sumstats.gz",
+    "~/R-workspace/Anthro/birthweight.sumstats.gz"
   ),
   sample.prev <- c(NA, NA, NA, NA, NA, NA, NA, NA, NA),
   population.prev <- c(NA, NA, NA, NA, NA, NA, NA, NA, NA),
-  ld <- "~/mrSEM/data/eur_w_ld_chr/",
-  wld <- "~/mrSEM/data/eur_w_ld_chr/",
-  trait.names <- c("BMI", "WHR", "CO", "Waist", "Hip", "Height", "IHC", "BL", "BW")
+  ld <- "~/R-workspace/eur_w_ld_chr/",
+  wld <- "~/R-workspace/eur_w_ld_chr",
+  trait.names <- c("BMI", "WHR", "CO", "Waist", "Hip", "Height", "IHC", "BL", "BW"),
+  sep_weights = FALSE,
+  chr = 22,
+  n.blocks = 200,
+  ldsc.log = 'anthro',
+  stand = TRUE,
+  select = FALSE,
+  chisq.max = NA
 )
 
 require(Matirx)
 # Convert genetic covariance matrix (i.e. S) to correlation matrix
+rownames(anthro[["S"]]) <- colnames(anthro[["S"]])
 anthro.corMatirx <- cov2cor(anthro[["S"]])
-rownames(anthro.corMatirx) <- colnames(anthro[["S"]])
 
 # Confirm the number of latent variables using hierarchical clustering
 # In stats package, hclust method optional parameter: ward.D, ward.D2, single, complete, average, mcquitty, median, centroid
