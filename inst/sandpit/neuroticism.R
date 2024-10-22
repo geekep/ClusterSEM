@@ -137,7 +137,19 @@ plot(hclustTree,
      ylab = 'Similarity [i.o. (1-Cor_coef)/2]',
      hang = -1)
 
-# Confirm the number of latent variables using hierarchical clustering
+# Exploratory Factor Analysis (EFA) using PCA and factor axis rotation
+require(Matrix)
+#In the Matrix package, smooth the neuroticism.corMatirx matrix for EFA using the nearPD function. 
+Ssmooth <- as.matrix((nearPD(neuroticism$S, corr = FALSE))$mat)
+require(stats)
+#In the stats package, run EFA with promax rotation and 3 factors using the factanal function 
+EFA <- factanal(covmat = Ssmooth, factors = 3, rotation = "promax")
+
+# Exploratory Factor Analysis (EFA) using spectral clustering
+require(kernlab)
+kernelMatrix <- as.kernelMatrix(as.matrix(neuroticism.corMatirx), center=FALSE)
+sc <- specc(x=kernelMatrix, centers=3, data=NULL, na.action = na.omit)
+
 # In pheatmap package, pheatmap clustering_method parameter is similar to the above stats::hclust method parameter option.
 require(pheatmap)
 pheatmap(
@@ -155,19 +167,6 @@ pheatmap(
   fontsize_col = 6
 )
 
-# Exploratory Factor Analysis (EFA) using PCA and factor axis rotation
-require(Matrix)
-#In the Matrix package, smooth the neuroticism.corMatirx matrix for EFA using the nearPD function. 
-Ssmooth <- as.matrix((nearPD(neuroticism$S, corr = FALSE))$mat)
-require(stats)
-#In the stats package, run EFA with promax rotation and 3 factors using the factanal function 
-EFA <- factanal(covmat = Ssmooth, factors = 3, rotation = "promax")
-
-# Exploratory Factor Analysis (EFA) using spectral clustering
-require(kernlab)
-kernelMatrix <- as.kernelMatrix(as.matrix(neuroticism.corMatirx), center=FALSE)
-sc <- specc(x=kernelMatrix, centers=3, data=NULL, na.action = na.omit)
-
 # Hierarchical Exploratory Factor Analysis (H-EFA) using BIRCH clustering
 neuroticism.CFTree <- BirchCF(x=as.data.frame(neuroticism$S),
                                Type = 'df',
@@ -180,4 +179,4 @@ CFAofEFA <- 'F1 =~ NA*mood + misery + fedup +lonely + irritability
              F3 =~ NA*tense + nerves + nervous + worry'
 
 # Confirmatory factor analysis (CFA) based on specified the genomic confirmatory factor model
-neuroticism.CFA <- usermodel(neuroticism, estimation = "DWLS", model = CFAofEFA, CFIcalc = TRUE, std.lv = TRUE, imp_cov = TRUE)
+neuroticism.CFA <- usermodel(neuroticism, estimation = "DWLS", model = CFAofEFA, CFIcalc = TRUE, std.lv = TRUE, imp_cov = TRUE, fix_resid = TRUE, toler = NULL)

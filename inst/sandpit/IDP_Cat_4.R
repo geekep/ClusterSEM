@@ -34,13 +34,14 @@ IDP.Cat.4 <- ldsc(
 
 # Convert genetic covariance matrix (i.e. S) to correlation matrix
 require(Matrix)
-rownames(IDP.Cat.4$Ssmooth) <- colnames(IDP.Cat.4$Ssmooth)
-IDP.Cat.4.corMatirx <- cov2cor(IDP.Cat.4$Ssmooth)
+rownames(IDP.Cat.4$S) <- colnames(IDP.Cat.4$S)
+IDP.Cat.4$Ssmooth <- as.matrix((nearPD(x=IDP.Cat.4$S, corr = FALSE))$mat)
+IDP.Cat.4.corMatirx <- as.matrix((nearPD(x=IDP.Cat.4$S, corr = TRUE))$mat)
 
 # Exploratory Factor Analysis (EFA) using PCA and factor axis rotation
 require(stats)
 # Run EFA with promax rotation and 5 factors using the factanal function in the stats package
-EFA <- factanal(covmat = IDP.Cat.4$Ssmooth, factors = 5, rotation = "promax")
+EFA <- factanal(covmat = IDP.Cat.4$Ssmooth, factors = 4, rotation = "promax")
 
 # Confirm the number of latent variables using hierarchical clustering
 # In stats package, hclust method optional parameter: ward.D, ward.D2, single, complete, average, mcquitty, median, centroid
@@ -52,7 +53,11 @@ plot(hclustTree,
      ylab = 'Similarity [i.o. (1-Cor_coef)/2]',
      hang = -1)
 
-# Confirm the number of latent variables using hierarchical clustering
+# Exploratory Factor Analysis (EFA) using spectral clustering
+require(kernlab)
+kernelMatrix <- as.kernelMatrix(as.matrix(IDP.Cat.4.corMatirx), center=FALSE)
+sc <- specc(x=kernelMatrix, centers=5, data=NULL, na.action = na.omit)
+
 # In pheatmap package, pheatmap clustering_method parameter is similar to the above stats::hclust method parameter option.
 require(pheatmap)
 pheatmap(
@@ -62,16 +67,13 @@ pheatmap(
   clustering_distance_rows = "correlation",
   clustering_distance_cols = "correlation",
   clustering_method = "complete",
+  annotation_row = data.frame(Traits = c(), row.names = rownames(IDP.Cat.4.corMatirx)),
+  annotation_col = data.frame(Traits = c(), row.names = colnames(IDP.Cat.4.corMatirx)),
   main = "Hierarchical clustering and spectral clustering for genetic correlation matrix \n of 41 imaging-derived phenotypes (regional and tissue intensity)",
   fontsize = 8,
   fontsize_row = 6,
   fontsize_col = 6
 )
-
-# Exploratory Factor Analysis (EFA) using spectral clustering
-require(kernlab)
-kernelMatrix <- as.kernelMatrix(as.matrix(IDP.Cat.4.corMatirx), center=FALSE)
-sc <- specc(x=kernelMatrix, centers=9, data=NULL, na.action = na.omit)
 
 # Hierarchical Exploratory Factor Analysis (H-EFA) using BIRCH clustering
 IDP.Cat.4.CFTree <- BirchCF(x=as.data.frame(IDP.Cat.4.corMatirx),

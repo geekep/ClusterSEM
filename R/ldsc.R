@@ -597,61 +597,13 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
     }
     
   }else{
-    warning("Your genetic covariance matrix includes traits estimated to have a negative heritability.")
-    .LOG("Your genetic covariance matrix includes traits estimated to have a negative heritability.", file=log.file, print = FALSE)
-    .LOG("Genetic correlation results could be computed by the nearPD function in the Matrix package.", file=log.file)
+    .LOG("Your genetic covariance matrix includes traits estimated to have a negative heritability.", file=log.file, print = TRUE)
+    .LOG("Genetic correlation results could not be computed due to negative heritability estimates.", file=log.file)
     
     if(stand){
-      
-      #smooth the genetic covariance matrix S using the nearPD function in the Matrix package
-      Ssmooth <- Matrix::as.matrix((Matrix::nearPD(S, corr = FALSE))$mat)
-      ##calculate standardized results to print genetic correlations to log and screen
-      ratio <- tcrossprod(1 / sqrt(diag(Ssmooth)))
-      S_Stand <- Ssmooth * ratio
-      
-      #calculate the ratio of the re-scaled and original S matrices
-      scaleO <- gdata::lowerTriangle(ratio, diag = TRUE)
-      
-      ## Make sure that if ratio in NaN (division by zero) we put the zero back in
-      # -> not possible because of 'all(diag(S) > 0)'
-      # scaleO[is.nan(scaleO)] <- 0
-      
-      #re-scale the sampling correlation matrix by the appropriate diagonals
-      V_Stand <- V * tcrossprod(scaleO)
-      
-      #enter SEs from diagonal of standardized V
-      r<-nrow(Ssmooth)
-      SE_Stand<-matrix(0, r, r)
-      SE_Stand[lower.tri(SE_Stand,diag=TRUE)] <- sqrt(diag(V_Stand))
-      
-      
-      .LOG(c("     ", "     "), file=log.file, print = FALSE)
-      .LOG("Genetic Correlation Results", file=log.file)
-      
-      for(j in 1:n.traits){
-        if(is.null(trait.names)){
-          chi1<-traits[j]
-        }else{chi1 <- trait.names[j]}
-        for(k in j:length(traits)){
-          if(j != k){
-            if(is.null(trait.names)){
-              chi2<-traits[k]
-            }else{chi2 <- trait.names[k]}
-            .LOG("Genetic Correlation between ", chi1, " and ", chi2, ": ",
-                 round(S_Stand[k, j], 4), " (", round(SE_Stand[k, j], 4), ")", file=log.file)
-            .LOG("     ", file=log.file, print = FALSE)
-          }
-        }
-      }
-      
-      flush(log.file)
-      close(log.file)
-      
-      return(list(V=V,S=S,Ssmooth=Ssmooth,I=I,N=N.vec,m=m,V_Stand=V_Stand,S_Stand=S_Stand,SE_Stand=SE_Stand))
-      
-    } else {
-      return(list(V=V,S=S,I=I,N=N.vec,m=m))
+      warning("Your genetic covariance matrix includes traits estimated to have a negative heritability.")
     }
     
+    return(list(V=V,S=S,I=I,N=N.vec,m=m))
   }
 }

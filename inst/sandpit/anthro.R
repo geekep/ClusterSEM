@@ -60,7 +60,19 @@ plot(hclustTree,
      ylab = 'Similarity [i.o. (1-Cor_coef)/2]',
      hang = -1)
 
-# Confirm the number of latent variables using hierarchical clustering
+# Exploratory Factor Analysis (EFA) using PCA and factor axis rotation
+require(Matrix)
+# Smooth the anthro.corMatirx matrix for EFA using the nearPD function in the Matrix package
+Ssmooth <- as.matrix((nearPD(anthro.corMatirx, corr = FALSE))$mat)
+require(stats)
+# Run EFA with promax rotation and 2 factors using the factanal function in the stats package
+EFA <- factanal(covmat = Ssmooth, factors = 2, rotation = "promax")
+
+# Exploratory Factor Analysis (EFA) using spectral clustering
+require(kernlab)
+kernelMatrix <- as.kernelMatrix(anthro.corMatirx, center=FALSE)
+sc <- specc(x=kernelMatrix, centers=2, data=NULL, na.action = na.omit)
+
 # In pheatmap package, pheatmap clustering_method parameter is similar to the above stats::hclust method parameter option.
 require(pheatmap)
 pheatmap(
@@ -78,19 +90,6 @@ pheatmap(
   fontsize_col = 6
 )
 
-# Exploratory Factor Analysis (EFA) using PCA and factor axis rotation
-require(Matrix)
-#In the Matrix package, smooth the anthro.corMatirx matrix for EFA using the nearPD function. 
-Ssmooth <- as.matrix((nearPD(anthro.corMatirx, corr = FALSE))$mat)
-require(stats)
-#In the stats package, run EFA with promax rotation and 2 factors using the factanal function
-EFA <- factanal(covmat = Ssmooth, factors = 2, rotation = "promax")
-
-# Exploratory Factor Analysis (EFA) using spectral clustering
-require(kernlab)
-kernelMatrix <- as.kernelMatrix(anthro.corMatirx, center=FALSE)
-sc <- specc(x=kernelMatrix, centers=2, data=NULL, na.action = na.omit)
-
 # Hierarchical Exploratory Factor Analysis (H-EFA) using BIRCH clustering
 anthro.CFTree <-
   BirchCF(
@@ -103,10 +102,9 @@ anthro.CFTree <-
 # Specify the genomic confirmatory factor model
 CFAofEFA <- 'F1 =~ NA*BMI + WHR + CO + Waist + Hip
              F2 =~ NA*Height + IHC + BL + BW
-             
              F1 ~~ F2
              Waist ~~ a*Waist
              a > .001'
 
 # Confirmatory factor analysis (CFA) based on specified the genomic confirmatory factor model
-anthro.CFA <- usermodel(anthro, estimation = "DWLS", model = CFAofEFA, CFIcalc = TRUE, std.lv = TRUE, imp_cov = TRUE)
+anthro.CFA <- usermodel(anthro, estimation = "DWLS", model = CFAofEFA, CFIcalc = TRUE, std.lv = TRUE, imp_cov = TRUE, fix_resid = TRUE, toler = NULL)
