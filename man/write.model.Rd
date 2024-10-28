@@ -5,23 +5,23 @@
 \title{Automate writing lavaan model syntax based on clustering output}
 \usage{
 write.model(
-  clusters,
   S_LD,
-  fix_resid = TRUE,
+  clusters = list(),
   common = FALSE,
-  hierarchical = FALSE
+  hierarchical = FALSE,
+  fix_resid = TRUE
 )
 }
 \arguments{
-\item{clusters}{Output from various clustering algorithms}
-
 \item{S_LD}{Genetic covariance matrix}
 
-\item{fix_resid}{default to TRUE}
+\item{clusters}{Output from various clustering algorithms}
 
 \item{common}{Whether to specify a common factor model, default to FALSE}
 
 \item{hierarchical}{Whether to specify a hierarchical exploratory factor model, default to FALSE}
+
+\item{fix_resid}{default to TRUE}
 }
 \value{
 lavaan model syntax satisfying clusters

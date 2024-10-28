@@ -63,7 +63,7 @@ plot(hclustTree,
 # Exploratory Factor Analysis (EFA) using PCA and factor axis rotation
 require(Matrix)
 # Smooth the anthro.corMatirx matrix for EFA using the nearPD function in the Matrix package
-Ssmooth <- as.matrix((nearPD(anthro.corMatirx, corr = FALSE))$mat)
+Ssmooth <- as.matrix((nearPD(anthro$S, corr = FALSE))$mat)
 require(stats)
 # Run EFA with promax rotation and 2 factors using the factanal function in the stats package
 EFA <- factanal(covmat = Ssmooth, factors = 2, rotation = "promax")
@@ -100,11 +100,11 @@ anthro.CFTree <-
   )
 
 # Specify the genomic confirmatory factor model
-CFAofEFA <- 'F1 =~ NA*BMI + WHR + CO + Waist + Hip
+anthro.CFAofEFA <- 'F1 =~ NA*BMI + WHR + CO + Waist + Hip
              F2 =~ NA*Height + IHC + BL + BW
              F1 ~~ F2
              Waist ~~ a*Waist
              a > .001'
 
 # Confirmatory factor analysis (CFA) based on specified the genomic confirmatory factor model
-anthro.CFA <- usermodel(anthro, estimation = "DWLS", model = CFAofEFA, CFIcalc = TRUE, std.lv = TRUE, imp_cov = TRUE, fix_resid = TRUE, toler = NULL)
+anthro.CFA <- usermodel(anthro, estimation = "DWLS", model = anthro.CFAofEFA, CFIcalc = TRUE, std.lv = TRUE, imp_cov = TRUE, fix_resid = TRUE, toler = NULL)

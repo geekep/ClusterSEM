@@ -3,9 +3,14 @@ Type: Package
 Title: Confirmatory factor analysis based on GWAS summary statistics
 Version: 1.0
 Author: Zhen Xu
-Maintainer: <xuzhen3039@stu.xjtu.edu.cn>
+Maintainer: Zhen Xu <xuzhen3039@stu.xjtu.edu.cn>
 Description: Confirmatory factor analysis based on GWAS summary statistics.
 Depends: R(>= 4.1.0)
+License: GPL (>= 3)
+LazyData: true
+ByteCompile: true
+Encoding: UTF-8
+RoxygenNote: 7.2.3
 Imports: 
     corpcor,
     data.table,
@@ -28,8 +33,3 @@ Imports:
     stringr,
     TwoSampleMR,
     utils
-License: GPL (>= 3)
-LazyData: yes
-ByteCompile: true
-Encoding: UTF-8
-RoxygenNote: 7.2.3

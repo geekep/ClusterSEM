@@ -22,7 +22,7 @@ IDP.Cat.4 <- ldsc(
   wld = "~/R-workspace/eur_w_ld_chr",
   sample.prev = rep(NA, length(c(1326:1366))),
   population.prev = rep(NA, length(c(1326:1366))),
-  trait.names = c(1326:1366), 
+  trait.names = paste0('pheno', c(1326:1366)), 
   sep_weights = FALSE,
   chr = 22,
   n.blocks = 200,
@@ -41,7 +41,7 @@ IDP.Cat.4.corMatirx <- as.matrix((nearPD(x=IDP.Cat.4$S, corr = TRUE))$mat)
 # Exploratory Factor Analysis (EFA) using PCA and factor axis rotation
 require(stats)
 # Run EFA with promax rotation and 5 factors using the factanal function in the stats package
-EFA <- factanal(covmat = IDP.Cat.4$Ssmooth, factors = 4, rotation = "promax")
+EFA <- factanal(covmat = IDP.Cat.4$Ssmooth, factors = 2, rotation = "promax")
 
 # Confirm the number of latent variables using hierarchical clustering
 # In stats package, hclust method optional parameter: ward.D, ward.D2, single, complete, average, mcquitty, median, centroid
@@ -56,7 +56,7 @@ plot(hclustTree,
 # Exploratory Factor Analysis (EFA) using spectral clustering
 require(kernlab)
 kernelMatrix <- as.kernelMatrix(as.matrix(IDP.Cat.4.corMatirx), center=FALSE)
-sc <- specc(x=kernelMatrix, centers=5, data=NULL, na.action = na.omit)
+sc <- specc(x=kernelMatrix, centers=4, data=NULL, na.action = na.omit)
 
 # In pheatmap package, pheatmap clustering_method parameter is similar to the above stats::hclust method parameter option.
 require(pheatmap)
@@ -67,8 +67,8 @@ pheatmap(
   clustering_distance_rows = "correlation",
   clustering_distance_cols = "correlation",
   clustering_method = "complete",
-  annotation_row = data.frame(Traits = c(), row.names = rownames(IDP.Cat.4.corMatirx)),
-  annotation_col = data.frame(Traits = c(), row.names = colnames(IDP.Cat.4.corMatirx)),
+  annotation_row = data.frame(IDP = paste0("F", sc@.Data), row.names = rownames(IDP.Cat.4.corMatirx)),
+  annotation_col = data.frame(IDP = paste0("F", sc@.Data), row.names = colnames(IDP.Cat.4.corMatirx)),
   main = "Hierarchical clustering and spectral clustering for genetic correlation matrix \n of 41 imaging-derived phenotypes (regional and tissue intensity)",
   fontsize = 8,
   fontsize_row = 6,
@@ -82,7 +82,7 @@ IDP.Cat.4.CFTree <- BirchCF(x=as.data.frame(IDP.Cat.4.corMatirx),
                               threshold = 0.01)
 
 # Specify the genomic confirmatory factor model
-CFAofEFA <- write.model(clusters=sc, S_LD=IDP.Cat.4$S, fix_resid=TRUE, common = FALSE, hierarchical = FALSE)
+IDP.Cat.4.CFAofEFA <- write.model(S_LD=IDP.Cat.4$S, clusters=list(size=sc@size, .Data=sc@.Data), common = FALSE, hierarchical = FALSE, fix_resid = TRUE)
 
 # Confirmatory factor analysis (CFA) based on specified the genomic confirmatory factor model
-IDP.Cat.4.CFA <- usermodel(IDP.Cat.4, estimation = "DWLS", model = CFAofEFA, CFIcalc = TRUE, std.lv = TRUE, imp_cov = TRUE)
+IDP.Cat.4.CFA <- usermodel(IDP.Cat.4, estimation = "DWLS", model = IDP.Cat.4.CFAofEFA, CFIcalc = TRUE, std.lv = TRUE, imp_cov = TRUE, fix_resid = TRUE, toler = NULL)

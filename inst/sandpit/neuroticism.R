@@ -174,9 +174,9 @@ neuroticism.CFTree <- BirchCF(x=as.data.frame(neuroticism$S),
                                threshold = 0.01)
 
 # Specify the genomic confirmatory factor model
-CFAofEFA <- 'F1 =~ NA*mood + misery + fedup +lonely + irritability
-             F2 =~ NA*hurt + guilt + embarass
-             F3 =~ NA*tense + nerves + nervous + worry'
+neuroticism.CFAofEFA <- 'F1 =~ NA*mood + misery + fedup +lonely + irritability
+                         F2 =~ NA*hurt + guilt + embarass
+                         F3 =~ NA*tense + nerves + nervous + worry'
 
 # Confirmatory factor analysis (CFA) based on specified the genomic confirmatory factor model
-neuroticism.CFA <- usermodel(neuroticism, estimation = "DWLS", model = CFAofEFA, CFIcalc = TRUE, std.lv = TRUE, imp_cov = TRUE, fix_resid = TRUE, toler = NULL)
+neuroticism.CFA <- usermodel(neuroticism, estimation = "DWLS", model = neuroticism.CFAofEFA, CFIcalc = TRUE, std.lv = TRUE, imp_cov = TRUE, fix_resid = TRUE, toler = NULL)
