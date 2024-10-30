@@ -17,64 +17,71 @@
 #' @export
 #'
 #' @references Ning, Z., Pawitan, Y. & Shen, X. High-definition likelihood inference of genetic correlations across human complex traits. Nat Genet (2020).
-hdl <- function(traits,sample.prev=NA,population.prev=NA,trait.names=NULL,LD.path,Nref = 335265,method="piecewise"){
+hdl <- function(
+    traits,
+    sample.prev = NA,
+    population.prev = NA,
+    trait.names = NULL,
+    LD.path,
+    Nref = 335265,
+    method = "piecewise"
+) {
 
   ### Do some data wrangling for the LD files:
   
   cat("GenomicSEM multivariable HDL function, based on the original implmentation of HDL please cite: Ning, Pawitan & Shen, Nature Genetics (2020)")
   
   if(is.null(trait.names)){
-    traits2 <- paste0("V",1:length(traits))
-    trat.names<-(traits2)
+    traits2 <- paste0("V", 1:length(traits))
+    trat.names <- traits2
   }
   
   
   LD.files <- list.files(LD.path)
   
-  if(any(grepl(x = LD.files, pattern = "UKB_snp_counter.*"))){
+  if(any(grepl(x = LD.files, pattern = "UKB_snp_counter.*"))) {
     snp_counter_file <- LD.files[grep(x = LD.files, pattern = "UKB_snp_counter.*")]
     snp_list_file <- LD.files[grep(x = LD.files, pattern = "UKB_snp_list.*")]
-    load(file=paste(LD.path, snp_counter_file, sep = "/"))
-    load(file=paste(LD.path, snp_list_file, sep = "/"))
-    if("nsnps.list.imputed" %in% ls()){
+    load(file = paste(LD.path, snp_counter_file, sep = "/"))
+    load(file = paste(LD.path, snp_list_file, sep = "/"))
+    if ("nsnps.list.imputed" %in% ls()) {
       snps.name.list <- snps.list.imputed.vector
       nsnps.list <- nsnps.list.imputed
     }
-  } else{
+  } else {
     error.message <- "It seems this directory does not contain all files needed for HDL. Please check your LD.path again. The version of HDL implementerd in GenomicSEM only support pre-computed LD reference panels."
     stop(error.message)
   }
   
   num.pieces <- length(unlist(nsnps.list))
   
-  
-  
   # Dimensions
   n.traits <- length(traits)
-  n.V <- (n.traits^2 / 2) + .5*n.traits
+  n.V <- (n.traits ^ 2 / 2) + .5 * n.traits
   
   if(!(is.null(trait.names))){
-    check_names<-stringr::str_detect(trait.names, "-")
-    if(any(check_names==TRUE)){warning("Your trait names specified include mathematical arguments (e.g., + or -) that will be misread by lavaan. Please rename the traits using the trait.names argument.")}
+    check_names <- stringr::str_detect(trait.names, "-")
+    if(any(check_names==TRUE))
+      {warning("Your trait names specified include mathematical arguments (e.g., + or -) that will be misread by lavaan. Please rename the traits using the trait.names argument.")}
   }
   
-  if(length(traits)==1){warning("Our version of hdl requires 2 or more traits. Please include an additional trait.")}
+  if(length(traits)==1) {warning("Our version of hdl requires 2 or more traits. Please include an additional trait.")}
   
   
   # Storage:
-  S <- cov <- matrix(NA,nrow=n.traits,ncol=n.traits)
-  V.hold <- matrix(NA,nrow=num.pieces,ncol=n.V)
-  N.vec <- matrix(NA,nrow=1,ncol=n.V)
-  Liab.S <- matrix(1,nrow=1,ncol=n.traits)
-  I <- matrix(NA,nrow=n.traits,ncol=n.traits)
-  complete <- matrix(1,nrow=1,ncol=n.traits)
+  S <- cov <- matrix(NA, nrow = n.traits, ncol = n.traits)
+  V.hold <- matrix(NA, nrow = num.pieces, ncol = n.V)
+  N.vec <- matrix(NA, nrow = 1, ncol = n.V)
+  Liab.S <- matrix(1, nrow = 1, ncol = n.traits)
+  I <- matrix(NA, nrow = n.traits, ncol = n.traits)
+  complete <- matrix(1, nrow = 1, ncol = n.traits)
 # Start with general utility functions needed for hdl and standard errors
 
 
 #### Define the likelihood function to be optimized for h2:
 
 
-llfun <-  function(param, N, M,Nref=1000, lam, bstar, lim=exp(-10)){
+llfun <-  function(param, N, M,Nref=1000, lam, bstar, lim=exp(-10)) {
     h2 <- param[1]
     int <- param[2]
     lamh2 <- h2/M*lam^2 - h2*lam/Nref + int*lam/N

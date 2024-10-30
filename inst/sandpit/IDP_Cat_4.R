@@ -40,8 +40,8 @@ IDP.Cat.4.corMatirx <- as.matrix((nearPD(x=IDP.Cat.4$S, corr = TRUE))$mat)
 
 # Exploratory Factor Analysis (EFA) using PCA and factor axis rotation
 require(stats)
-# Run EFA with promax rotation and 5 factors using the factanal function in the stats package
-EFA <- factanal(covmat = IDP.Cat.4$Ssmooth, factors = 2, rotation = "promax")
+# Run EFA with promax rotation and 4-factors using the factanal function in the stats package
+EFA <- factanal(covmat = IDP.Cat.4$Ssmooth, factors = 4, rotation = "promax")
 
 # Confirm the number of latent variables using hierarchical clustering
 # In stats package, hclust method optional parameter: ward.D, ward.D2, single, complete, average, mcquitty, median, centroid

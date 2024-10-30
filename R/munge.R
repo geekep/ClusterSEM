@@ -103,7 +103,7 @@ munge <- function(files,hm3,trait.names=NULL,N=NULL,info.filter = .9,maf.filter=
     utilfuncs <- list()
     utilfuncs[[".get_renamed_colnames"]] <- .get_renamed_colnames
     utilfuncs[[".LOG"]] <- .LOG
-    utilfuncs[["gzip"]] <- gzip
+    # utilfuncs[["gzip"]] <- gzip
     .LOG("As parallel munging was requested, logs of each sumstats file will be saved separately",file=log.file)
     foreach::foreach (i=1:length(filenames), .export=c(".munge_main"), .packages=c("stringr")) %dopar% {
       .munge_main(i, utilfuncs, NULL, filenames[i], trait.names[i], N[i], ref, hm3, info.filter, maf.filter, column.names, overwrite, NULL)
