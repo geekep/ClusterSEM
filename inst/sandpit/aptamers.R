@@ -51,7 +51,7 @@ aptamers.ldsc$corMatirx <- as.matrix((nearPD(x=aptamers.ldsc$S, corr = TRUE))$ma
 # Exploratory Factor Analysis (EFA) using PCA and factor axis rotation
 require(stats)
 # Run EFA with promax rotation and 35-factors using the factanal function in the stats package
-EFA <- factanal(covmat = aptamers.ldsc$Ssmooth, factors = 35, rotation = "promax")
+EFA <- factanal(covmat = aptamers.ldsc$Ssmooth, factors = 6, rotation = "promax")
 
 # Confirm the number of latent variables using hierarchical clustering
 # In stats package, hclust method optional parameter: ward.D, ward.D2, single, complete, average, mcquitty, median, centroid

@@ -15,11 +15,21 @@
 #'
 #' @return The function writes files of the ".sumstats.gz" format, which can be used to estimate SNP heritability and genetic covariance using the ldsc() function. The function will also output a .log file that should be examined to ensure that column names are being interpret correctly.
 #' @export
-munge <- function(files,hm3,trait.names=NULL,N=NULL,info.filter = .9,maf.filter=0.01,log.name=NULL, column.names=list(), parallel=FALSE, cores=NULL, overwrite=TRUE){
+munge <- function(files,
+                  hm3,
+                  trait.names = NULL,
+                  N = NULL,
+                  info.filter = .9,
+                  maf.filter = 0.01,
+                  log.name = NULL,
+                  column.names = list(),
+                  parallel = FALSE,
+                  cores = NULL,
+                  overwrite = TRUE) {
+  
   if (is.list(files)) {
-    wrn <- paste0("DeprecationWarning: In future versions a list of filenames will no longer be accepted.\n",
-                  "                    Please change files to a vector to ensure future compatibility.")
-    warning(wrn)
+    warning(paste0("DeprecationWarning: In future versions a list of filenames will no longer be accepted.\n",
+                  "                    Please change files to a vector to ensure future compatibility."))
     files_ <- c()
     for (i in 1:length(files)) {
       files_ <- c(files_, files[[i]])
@@ -48,15 +58,13 @@ munge <- function(files,hm3,trait.names=NULL,N=NULL,info.filter = .9,maf.filter=
 
   filenames <- as.vector(files)
   if(is.null(log.name)){
-    log2 <- paste(trait.names,collapse="_")
-      if(nchar(log2) > 200){
-        log2 <- substr(log2,1,100)
-      }
-      log.file <- file(paste0(log2, "_munge.log"),open="wt")
+    log2 <- paste(trait.names, collapse="_")
+      if(nchar(log2) > 200) {log2 <- substr(log2,1,100)}
+      log.file <- file(paste0(log2, "_munge.log"), open="wt")
   }
   
   if(!is.null(log.name)){ 
-   log.file <- file(paste0(log.name, "_munge.log"),open="wt") 
+   log.file <- file(paste0(log.name, "_munge.log"), open="wt") 
   }
   if (parallel & (length(files) == 1)) {
     .LOG("Parallel munging requested for a single file.\nParallel munging only has benefits for munging multiple files.\nParallel disabled", file=log.file)
@@ -73,14 +81,14 @@ munge <- function(files,hm3,trait.names=NULL,N=NULL,info.filter = .9,maf.filter=
     if (length(existing_files) > 0)
       .LOG("File(s) ", paste0(existing_files, collapse = ", "), " already exist and will be overwritten", file=log.file)
   }
-  .LOG("Reading in reference file",file=log.file)
-  ref <- data.table::fread(hm3,header=T,data.table=F)
+  .LOG("Reading in reference file", file=log.file)
+  ref <- data.table::fread(hm3, header=T, data.table=F)
   if (!parallel) {
-    .LOG("Reading summary statistics for ", paste(files,collapse=" "), ". Please note that this step usually takes a few minutes due to the size of summary statistic files.", file=log.file)
+    .LOG("Reading summary statistics for ", paste(files, collapse=" "), ". Please note that this step usually takes a few minutes due to the size of summary statistic files.", file=log.file)
     ##note that fread is not used here due to formatting differences across summary statistic files
     files <- lapply(files, read.table, header=T, quote="\"", fill=T, na.string=c(".", NA, "NA", ""))
-    .LOG("All files loaded into R!",file=log.file)
-    for(i in 1:length(files)){
+    .LOG("All files loaded into R!", file=log.file)
+    for(i in 1:length(files)) {
       .munge_main(i, NULL, files[[i]], filenames[i], trait.names[i], N[i], ref, hm3, info.filter, maf.filter, column.names, overwrite, log.file)
     }
   } else {
@@ -91,7 +99,7 @@ munge <- function(files,hm3,trait.names=NULL,N=NULL,info.filter = .9,maf.filter=
       int <- cores
     }
     if (int > length(filenames)) {
-      .LOG("Number of requested cores(", int,") greater than the number of files (",length(filenames),"). Deferring to the lowest number",file=log.file)
+      .LOG("Number of requested cores(", int, ") greater than the number of files (",length(filenames),"). Deferring to the lowest number",file=log.file)
       int <- length(filenames)
     }
     # Defaulting to PSOCK cluster as it should work on both Linux and Windows,
@@ -103,23 +111,23 @@ munge <- function(files,hm3,trait.names=NULL,N=NULL,info.filter = .9,maf.filter=
     utilfuncs <- list()
     utilfuncs[[".get_renamed_colnames"]] <- .get_renamed_colnames
     utilfuncs[[".LOG"]] <- .LOG
-    # utilfuncs[["gzip"]] <- gzip
-    .LOG("As parallel munging was requested, logs of each sumstats file will be saved separately",file=log.file)
+    utilfuncs[["gzip"]] <- R.utils::gzip
+    .LOG("As parallel munging was requested, logs of each sumstats file will be saved separately", file=log.file)
     foreach::foreach (i=1:length(filenames), .export=c(".munge_main"), .packages=c("stringr")) %dopar% {
       .munge_main(i, utilfuncs, NULL, filenames[i], trait.names[i], N[i], ref, hm3, info.filter, maf.filter, column.names, overwrite, NULL)
     }
   }
   
   end.time <- Sys.time()
-  total.time <- difftime(time1=end.time,time2=begin.time,units="sec")
-  mins <- floor(floor(total.time)/60)
-  secs <- total.time-mins*60
+  total.time <- difftime(time1=end.time, time2=begin.time, units="sec")
+  mins <- floor(floor(total.time) / 60)
+  secs <- total.time - mins*60
   
-  .LOG("     ",file=log.file)
-  .LOG("Munging was completed at ",end.time,file=log.file)
-  .LOG("The munging of all files took ",mins," minutes and ",secs," seconds",file=log.file)
-  .LOG("Please check the .log file(s) to ensure that all columns were interpreted correctly and no warnings were issued for any of the summary statistics files",file=log.file)
-    
+  .LOG("     ", file=log.file)
+  .LOG("Munging was completed at ", end.time, file = log.file)
+  .LOG("The munging of all files took ", mins, " minutes and ", secs, " seconds", file=log.file)
+  .LOG("Please check the .log file(s) to ensure that all columns were interpreted correctly and no warnings were issued for any of the summary statistics files", file=log.file)
+  
   flush(log.file)
   close(log.file)
 }
