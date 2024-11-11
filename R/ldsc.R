@@ -50,11 +50,11 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
 
   if(n.traits > 18){
     n.blocks <- (((n.traits + 1) * (n.traits + 2)) / 2) + 1
-    .LOG("     ", file=log.file, print = FALSE)
+    .LOG("     ", file=log.file, print=FALSE)
     .LOG("Setting the number of blocks used to perform the block jacknife used to estimate the sampling covariance matrix (V) to ", n.blocks, file=log.file)
     .LOG("This reflects the need to estimate V using at least one more block then their are nonredundant elements in the genetic covariance matrix that includes individual SNPs.", file=log.file)
     .LOG("If the n.blocks is > 1000 you should carefully inspect output for any strange results, such as extremely significant Q_SNP estimates.", file=log.file)
-    .LOG("     ", file=log.file, print = FALSE)
+    .LOG("     ", file=log.file, print=FALSE)
     if(n.blocks > 1000){
       warning("The number of blocks needed to estimate V is > 1000, which may result in sampling dependencies across the blocks used to estimate standard errors and can bias results.")
     }
@@ -68,10 +68,11 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
 
   if(length(traits)==1) {warning("Our version of ldsc requires 2 or more traits. Please include an additional trait.")}
 
-  # Storage:
+  #### Storage:
   cov <- matrix(NA, nrow=n.traits, ncol=n.traits)
   I <- matrix(NA, nrow=n.traits, ncol=n.traits)
-  V.hold <- matrix(NA,nrow=n.blocks, ncol=n.V)
+  # When n.traits > 18, V.hold will be very huge and system cannot allocate vector of such size.
+  V.hold <- matrix(NA, nrow=n.blocks, ncol=n.V)
   N.vec <- matrix(NA, nrow=1, ncol=n.V)
   Liab.S <- rep(1, n.traits)
   
