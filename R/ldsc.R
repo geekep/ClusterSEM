@@ -30,7 +30,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
 
   begin.time <- Sys.time()
 
-  if(is.null(ldsc.log)){
+  if(is.null(ldsc.log)) {
     logtraits <- gsub(".*/", "", traits)
     log2 <- paste(logtraits, collapse = "_")
     if (object.size(log2) > 200) {log2 <- substr(log2, 1, 100)}
@@ -44,18 +44,18 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
     even <- seq(2, chr, 2)
   }
 
-  # Dimensions
+  # Dimensions of S and V matrix
   n.traits <- length(traits)
   n.V <- n.traits * (n.traits + 1) / 2
 
-  if(n.traits > 18){
+  if(n.traits > 18) {
     n.blocks <- (((n.traits + 1) * (n.traits + 2)) / 2) + 1
     .LOG("     ", file=log.file, print=FALSE)
     .LOG("Setting the number of blocks used to perform the block jacknife used to estimate the sampling covariance matrix (V) to ", n.blocks, file=log.file)
-    .LOG("This reflects the need to estimate V using at least one more block then their are nonredundant elements in the genetic covariance matrix that includes individual SNPs.", file=log.file)
+    .LOG("This reflects the need to estimate V using at least one more block then they are nonredundant elements in the genetic covariance matrix that includes individual SNPs.", file=log.file)
     .LOG("If the n.blocks is > 1000 you should carefully inspect output for any strange results, such as extremely significant Q_SNP estimates.", file=log.file)
     .LOG("     ", file=log.file, print=FALSE)
-    if(n.blocks > 1000){
+    if(n.blocks > 1000) {
       warning("The number of blocks needed to estimate V is > 1000, which may result in sampling dependencies across the blocks used to estimate standard errors and can bias results.")
     }
   }
@@ -68,13 +68,13 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
 
   if(length(traits)==1) {warning("Our version of ldsc requires 2 or more traits. Please include an additional trait.")}
 
-  #### Storage:
+  #### Vector and Matrix Storage
+  Liab.S <- rep(1, n.traits)
   cov <- matrix(NA, nrow=n.traits, ncol=n.traits)
   I <- matrix(NA, nrow=n.traits, ncol=n.traits)
-  # When n.traits > 18, V.hold will be very huge and system cannot allocate vector of such size.
-  V.hold <- matrix(NA, nrow=n.blocks, ncol=n.V)
   N.vec <- matrix(NA, nrow=1, ncol=n.V)
-  Liab.S <- rep(1, n.traits)
+  # When n.traits > 18, n.blocks will be recalculated to very huge number and system cannot allocate vector of such size.
+  V.hold <- matrix(NA, nrow=n.blocks, ncol=n.V)
   
   #########  READ LD SCORES:
   .LOG("Reading in LD scores", file=log.file)
@@ -83,33 +83,27 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
     x <- do.call("rbind", lapply(1:chr, function(i) {
       suppressMessages(readr::read_delim(
           file.path(ld, paste0(i, ".l2.ldscore.gz")),
-          delim = "\t", escape_double = FALSE, trim_ws = TRUE, progress = FALSE
-        )
-      )
+          delim = "\t", escape_double = FALSE, trim_ws = TRUE, progress = FALSE))
     }))
   }
 
-  if(select == "ODD"){
+  if(select == "ODD") {
     x <- do.call("rbind", lapply(odd, function(i) {
       suppressMessages(readr::read_delim(
         file.path(ld, paste0(i, ".l2.ldscore.gz")),
-        delim = "\t", escape_double = FALSE, trim_ws = TRUE, progress = FALSE
-        )
-      )
+        delim = "\t", escape_double = FALSE, trim_ws = TRUE, progress = FALSE))
     }))
   }
 
-  if(select == "EVEN"){
+  if(select == "EVEN") {
     x <- do.call("rbind", lapply(even, function(i) {
       suppressMessages(readr::read_delim(
         file.path(ld, paste0(i, ".l2.ldscore.gz")),
-        delim = "\t", escape_double = FALSE, trim_ws = TRUE, progress = FALSE
-        )
-      )
+        delim = "\t", escape_double = FALSE, trim_ws = TRUE, progress = FALSE))
     }))
   }
 
-  if(is.numeric(select)){
+  if(is.numeric(select)) {
     x <- do.call("rbind", lapply(select, function(i) {
       suppressMessages(readr::read_delim(
         file.path(ld, paste0(i, ".l2.ldscore.gz")),
@@ -129,6 +123,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
         delim = "\t", escape_double = FALSE, trim_ws = TRUE, progress = FALSE))
     }))
     }
+    
     if(select == "EVEN") {
       w <- do.call("rbind", lapply(even, function(i) {
         suppressMessages(readr::read_delim(
@@ -136,6 +131,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
           delim = "\t", escape_double = FALSE, trim_ws = TRUE, progress = FALSE))
       }))
     }
+    
     if(select == "ODD") {
       w <- do.call("rbind", lapply(odd, function(i) {
         suppressMessages(readr::read_delim(
@@ -143,6 +139,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
           delim = "\t", escape_double = FALSE, trim_ws = TRUE, progress = FALSE))
       }))
     }
+    
     if(is.numeric(select)) {
       w <- do.call("rbind", lapply(select, function(i) {
         suppressMessages(readr::read_delim(
@@ -158,7 +155,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
   colnames(w)[ncol(w)] <- "wLD"
 
   ### READ M
-  if(select == FALSE){
+  if(select == FALSE) {
   m <- do.call("rbind", lapply(1:chr, function(i) {
     suppressMessages(readr::read_csv(file.path(ld, paste0(i, ".l2.M_5_50")), col_names = FALSE))
   }))
@@ -268,28 +265,28 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
         select.to <- c(select.from[2:n.blocks]-1, n.snps)
 
         xty.block.values <- matrix(data=NA, nrow=n.blocks, ncol=(n.annot+1))
-        xtx.block.values <- matrix(data=NA, nrow=((n.annot+1)* n.blocks), ncol =(n.annot+1))
+        xtx.block.values <- matrix(data=NA, nrow=((n.annot+1)*n.blocks), ncol=(n.annot+1))
         colnames(xty.block.values) <- colnames(xtx.block.values) <- colnames(weighted.LD)
         replace.from <- seq(from=1, to=nrow(xtx.block.values), by=(n.annot+1))
         replace.to <- seq(from =(n.annot+1),to=nrow(xtx.block.values),by =(n.annot+1))
         for(i in 1:n.blocks) {
           xty.block.values[i,] <- t(t(weighted.LD[select.from[i]:select.to[i],])%*% weighted.chi[select.from[i]:select.to[i],])
-          xtx.block.values[replace.from[i]:replace.to[i],] <- as.matrix(t(weighted.LD[select.from[i]:select.to[i],])%*% weighted.LD[select.from[i]:select.to[i],])
+          xtx.block.values[replace.from[i]:replace.to[i],] <- as.matrix(t(weighted.LD[select.from[i]:select.to[i],]) %*% weighted.LD[select.from[i]:select.to[i],])
         }
         xty <- as.matrix(colSums(xty.block.values))
-        xtx <- matrix(data=NA,nrow =(n.annot+1),ncol =(n.annot+1))
+        xtx <- matrix(data=NA, nrow=(n.annot+1), ncol=(n.annot+1))
         colnames(xtx) <- colnames(weighted.LD)
-        for(i in 1:nrow(xtx)) {xtx[i,] <- t(colSums(xtx.block.values[seq(from=i,to=nrow(xtx.block.values),by=ncol(weighted.LD)),]))}
+        for(i in 1:nrow(xtx)) {xtx[i,] <- t(colSums(xtx.block.values[seq(from=i, to=nrow(xtx.block.values), by=ncol(weighted.LD)),]))}
 
         reg <- solve(xtx, xty)
         intercept <- reg[2]
         coefs <- reg[1] / N.bar
         reg.tot <- coefs * m
 
-        delete.from <- seq(from=1,to=nrow(xtx.block.values),by=ncol(xtx.block.values))
-        delete.to <- seq(from=ncol(xtx.block.values),to=nrow(xtx.block.values),by=ncol(xtx.block.values))
-        delete.values <- matrix(data=NA,nrow=n.blocks,ncol =(n.annot+1))
-        colnames(delete.values)<- colnames(weighted.LD)
+        delete.from <- seq(from=1, to=nrow(xtx.block.values), by=ncol(xtx.block.values))
+        delete.to <- seq(from=ncol(xtx.block.values), to=nrow(xtx.block.values), by=ncol(xtx.block.values))
+        delete.values <- matrix(data=NA, nrow=n.blocks, ncol =(n.annot+1))
+        colnames(delete.values) <- colnames(weighted.LD)
         for(i in 1:n.blocks){
           xty.delete <- xty-xty.block.values[i,]
           xtx.delete <- xtx-xtx.block.values[delete.from[i]:delete.to[i],]
@@ -297,14 +294,14 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
         }
 
         tot.delete.values <- delete.values[,1:n.annot]
-        pseudo.values <- matrix(data=NA,nrow=n.blocks,ncol=length(reg))
+        pseudo.values <- matrix(data=NA, nrow=n.blocks, ncol=length(reg))
         colnames(pseudo.values) <- colnames(weighted.LD)
-        for(i in 1:n.blocks) {pseudo.values[i,] <- (n.blocks*reg)-((n.blocks-1)* delete.values[i,])}
+        for(i in 1:n.blocks) {pseudo.values[i,] <- (n.blocks*reg)-((n.blocks-1)*delete.values[i,])}
 
-        jackknife.cov <- cov(pseudo.values)/n.blocks
+        jackknife.cov <- cov(pseudo.values) / n.blocks
         jackknife.se <- sqrt(diag(jackknife.cov))
         intercept.se <- jackknife.se[length(jackknife.se)]
-        coef.cov <- jackknife.cov[1:n.annot,1:n.annot]/(N.bar^2)
+        coef.cov <- jackknife.cov[1:n.annot,1:n.annot] / (N.bar^2)
 
         cat.cov <- coef.cov * (m %*% t(m))
         tot.cov <- sum(cat.cov)
@@ -316,12 +313,12 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
         if(is.na(pop.prev) == F & is.na(samp.prev) == F) {
           conversion.factor <- (pop.prev^2*(1-pop.prev)^2)/(samp.prev*(1-samp.prev)* dnorm(qnorm(1-pop.prev))^2)
           Liab.S[j] <- conversion.factor
-          .LOG("     ", file=log.file, print = FALSE)
+          .LOG("     ", file=log.file, print=FALSE)
           .LOG("Please note that the results initially printed to the screen and log file reflect the NON-liability h2 and cov_g. However, a liability conversion is being used for trait ",
             chi1,
             " when creating the genetic covariance matrix used as input for ClusterSEM and liability scale results are printed at the end of the log file.",
-            file = log.file)
-          .LOG("     ", file=log.file, print = FALSE)
+            file=log.file)
+          .LOG("     ", file=log.file, print=FALSE)
         }
 
         cov[j,j] <- reg.tot
@@ -345,7 +342,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
       ##### GENETIC COVARIANCE code
       if(j != k) {
 
-        .LOG("     ", file=log.file, print = FALSE)
+        .LOG("     ", file=log.file, print=FALSE)
 
         chi2 <- traits[k]
         .LOG("Calculating genetic covariance [", s, "/", n.V, "] for traits: ", chi1, " and ", chi2, file=log.file)
@@ -409,8 +406,8 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
         replace.from <- seq(from=1,to=nrow(xtx.block.values),by =(n.annot+1))
         replace.to <- seq(from =(n.annot+1),to=nrow(xtx.block.values),by =(n.annot+1))
         for(i in 1:n.blocks) {
-          xty.block.values[i,] <- t(t(weighted.LD[select.from[i]:select.to[i],])%*% weighted.chi[select.from[i]:select.to[i],])
-          xtx.block.values[replace.from[i]:replace.to[i],] <- as.matrix(t(weighted.LD[select.from[i]:select.to[i],])%*% weighted.LD[select.from[i]:select.to[i],])
+          xty.block.values[i,] <- t(t(weighted.LD[select.from[i]:select.to[i],]) %*% weighted.chi[select.from[i]:select.to[i],])
+          xtx.block.values[replace.from[i]:replace.to[i],] <- as.matrix(t(weighted.LD[select.from[i]:select.to[i],]) %*% weighted.LD[select.from[i]:select.to[i],])
         }
         xty <- as.matrix(colSums(xty.block.values))
         xtx <- matrix(data=NA, nrow =(n.annot+1), ncol =(n.annot+1))
@@ -424,7 +421,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
 
         delete.from <- seq(from=1, to=nrow(xtx.block.values), by=ncol(xtx.block.values))
         delete.to <- seq(from=ncol(xtx.block.values), to=nrow(xtx.block.values), by=ncol(xtx.block.values))
-        delete.values <- matrix(data=NA,nrow=n.blocks, ncol =(n.annot+1))
+        delete.values <- matrix(data=NA, nrow=n.blocks, ncol =(n.annot+1))
         colnames(delete.values) <- colnames(weighted.LD)
         for(i in 1:n.blocks) {
           xty.delete <- xty-xty.block.values[i,]
@@ -433,7 +430,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
         }
 
         tot.delete.values <- delete.values[,1:n.annot]
-        pseudo.values <- matrix(data=NA,nrow=n.blocks,ncol=length(reg))
+        pseudo.values <- matrix(data=NA, nrow=n.blocks, ncol=length(reg))
         colnames(pseudo.values) <- colnames(weighted.LD)
         for(i in 1:n.blocks) {pseudo.values[i,] <- (n.blocks*reg)-((n.blocks-1)*delete.values[i,])}
 
@@ -489,7 +486,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
     SE <- matrix(0, r, r)
     SE[lower.tri(SE, diag = TRUE)] <- sqrt(diag(V))
 
-    .LOG(c("     ", "     "), file=log.file, print = FALSE)
+    .LOG(c("     ", "     "), file=log.file, print=FALSE)
     .LOG("Liability Scale Results", file=log.file)
 
     for(j in 1:n.traits) {
@@ -498,7 +495,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
       
       for(k in j:length(traits)) {
         if(j == k) {
-          .LOG("     ", file=log.file, print = FALSE)
+          .LOG("     ", file=log.file, print=FALSE)
           .LOG("Liability scale results for: ", chi1, file=log.file)
           .LOG("Total Liability Scale h2: ", round(S[j, j], 4), " (", round(SE[j, j], 4), ")", file=log.file)
         }
@@ -506,10 +503,10 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
         if(j != k) {
           if(is.null(trait.names)) {chi2 <- traits[k]} else {chi2 <- trait.names[k]}
           .LOG("Total Liability Scale Genetic Covariance between ", chi1, " and ", chi2, ": ", round(S[k, j], 4), " (", round(SE[k, j], 4), ")", file=log.file)
-          .LOG("     ", file=log.file, print = FALSE)
+          .LOG("     ", file=log.file, print=FALSE)
         }
-        
       }
+      
     }
   }
 
@@ -518,14 +515,14 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
   mins <- floor(floor(total.time) / 60)
   secs <- floor(total.time - mins * 60)
   
-  .LOG("     ", file=log.file, print = FALSE)
+  .LOG("     ", file=log.file, print=FALSE)
   .LOG("LDSC finished running at ", end.time, file=log.file)
   .LOG("Running LDSC for all files took ", mins, " minutes and ", secs, " seconds", file=log.file)
-  .LOG("     ", file=log.file, print = FALSE)
+  .LOG("     ", file=log.file, print=FALSE)
 
   if(all(diag(S) > 0)) {
 
-    if(stand){
+    if(stand) {
       ##calculate standardized results to print genetic correlations to log and screen
       ratio <- tcrossprod(1 / sqrt(diag(S)))
       S_Stand <- S * ratio
@@ -545,16 +542,16 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
       SE_Stand <- matrix(0, r, r)
       SE_Stand[lower.tri(SE_Stand, diag = TRUE)] <- sqrt(diag(V_Stand))
       
-      .LOG(c("     ", "     "), file=log.file, print = FALSE)
+      .LOG(c("     ", "     "), file=log.file, print=FALSE)
       .LOG("Genetic Correlation Results", file=log.file)
       
-      for(j in 1:n.traits){
+      for(j in 1:n.traits) {
         if(is.null(trait.names)) {chi1 <- traits[j]} else {chi1 <- trait.names[j]}
         for(k in j:length(traits)) {
           if(j != k) {
             if(is.null(trait.names)) {chi2 <- traits[k]} else {chi2 <- trait.names[k]}
             .LOG("Genetic Correlation between ", chi1, " and ", chi2, ": ", round(S_Stand[k, j], 4), " (", round(SE_Stand[k, j], 4), ")", file=log.file)
-            .LOG("     ", file=log.file, print = FALSE)
+            .LOG("     ", file=log.file, print=FALSE)
           }
         }
       }
@@ -572,7 +569,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
     .LOG("Your genetic covariance matrix includes traits estimated to have a negative heritability.", file=log.file, print = TRUE)
     .LOG("Genetic correlation results could not be computed due to negative heritability estimates.", file=log.file)
     
-    if(stand){
+    if(stand) {
       warning("Your genetic covariance matrix includes traits estimated to have a negative heritability. Please manually calculate standardized results. (e.g. You can use function Matrix::as.matrix((nearPD(x=ldsc.output$S, corr = TRUE))$mat))")
     }
     
