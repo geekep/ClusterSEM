@@ -21,7 +21,7 @@
   if (is.null(file)) {
     file <- read.table(filename, header=T, quote="\"", fill=T, na.strings=c(".", NA, "NA", ""))
   }
-  .LOG("Munging file: ", filename, file=log.file, print=TRUE)
+  .LOG("Munging file: ", filename, file=log.file)
 
   N_provided <- (!is.na(N))
   
@@ -102,6 +102,7 @@ Please note that this is likely effective sample size cut in half. The function 
          " summary statistics file due to the other allele (A2) column not matching A1 or A2 in the reference file.",
          file = log.file)
   
+  
   ####VALIDITY CHECKS#####
   #Check that p-value column does not contain an excess of 1s/0s
   if((sum(file$P > 1) + sum(file$P < 0)) > 100) {
@@ -125,7 +126,7 @@ Please note that this is likely effective sample size cut in half. The function 
     file <- file[file$MAF >= maf.filter, ]
     file <- subset(file, !(is.na(file$MAF)))
     .LOG(b-nrow(file), " rows were removed from the ", filename, " summary statistics file due to missing MAF information or MAFs below the designated threshold of", maf.filter, file=log.file)
-  }else {.LOG("No MAF column, cannot filter on MAF, which may influence results", file=log.file)}
+  } else {.LOG("No MAF column, cannot filter on MAF, which may influence results", file=log.file)}
 
   if("N" %in% colnames(file)) {
     output <- cbind.data.frame(file$SNP, file$N, file$Z, file$A1.x, file$A2.x)
