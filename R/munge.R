@@ -27,19 +27,20 @@ munge <- function(files,
                   cores = NULL,
                   overwrite = TRUE) {
   
+  # check files
   if (is.list(files)) {
     warning(paste0("DeprecationWarning: In future versions a list of filenames will no longer be accepted.\n",
                   "                    Please change files to a vector to ensure future compatibility."))
     files_ <- c()
-    for (i in 1:length(files)) {
-      files_ <- c(files_, files[[i]])
-    }
+    for (i in 1:length(files)) {files_ <- c(files_, files[[i]])}
     files <- files_
   }
-  if (is.null(N))  {
-    N <- rep(NA, length(files))
-  }
-  # Sanity checks
+  filenames <- as.vector(files)
+  
+  # check N
+  if (is.null(N)) {N <- rep(NA, length(files))}
+  
+  # Sanity checks start
   .check_file_exists(files)
   .check_file_exists(hm3)
   .check_equal_length(files, trait.names)
@@ -56,54 +57,60 @@ munge <- function(files,
   .check_boolean(overwrite)
   # Sanity checks finished
 
-  filenames <- as.vector(files)
-  if(is.null(log.name)){
+  # check log.name
+  if(is.null(log.name)) {
     log2 <- paste(trait.names, collapse="_")
-      if(nchar(log2) > 200) {log2 <- substr(log2,1,100)}
-      log.file <- file(paste0(log2, "_munge.log"), open="wt")
+    if(nchar(log2) > 200) {log2 <- substr(log2, 1, 100)}
+    log.file <- file(paste0(log2, "_munge.log"), open="wt")
+  } else {
+    log.file <- file(paste0(log.name, "_munge.log"), open = "wt")
   }
   
-  if(!is.null(log.name)){ 
-   log.file <- file(paste0(log.name, "_munge.log"), open="wt") 
+  # check hm3
+  existing_traits <- c()
+  if (overwrite) {
+    existing_files <- c()
+    for (trait.name in trait.names) {
+      if (file.exists(paste0(trait.name, ".sumstats.gz"))) {
+        existing_traits <- c(existing_traits, trait.name)
+        existing_files <- c(existing_files, paste0(trait.name, ".sumstats.gz"))
+      }
+    }
+    if (length(existing_files) > 0)
+      .LOG("File(s) ", paste0(existing_files, collapse = ", "), " already exist and will be overwritten", file=log.file)
+  } else {
+    trait.names <- trait.names[-which(trait.names == existing_traits)]
   }
+  
+  # Read HAPMAP3 SNPs reference file
+  .LOG("Reading in reference file", file=log.file)
+  ref <- data.table::fread(hm3, header=T, data.table=F)
+  
+  begin.time <- Sys.time()
+  .LOG("The munging of ", length(trait.names), " summary statistics started at ", begin.time, file=log.file)
+  
+  # check parallel
   if (parallel & (length(files) == 1)) {
     .LOG("Parallel munging requested for a single file.\nParallel munging only has benefits for munging multiple files.\nParallel disabled", file=log.file)
     parallel <- FALSE
   }
-  begin.time <- Sys.time()
-  .LOG("The munging of ", length(trait.names), " summary statistics started at ", begin.time, file=log.file)
-  if (overwrite) {
-    existing_files <- c()
-    for (trait.name in trait.names) {
-      if (file.exists(paste0(trait.name, ".sumstats")))
-        existing_files <- c(existing_files, paste0(trait.name, ".sumstats"))
-    }
-    if (length(existing_files) > 0)
-      .LOG("File(s) ", paste0(existing_files, collapse = ", "), " already exist and will be overwritten", file=log.file)
-  }
-  .LOG("Reading in reference file", file=log.file)
-  ref <- data.table::fread(hm3, header=T, data.table=F)
   if (!parallel) {
     .LOG("Reading summary statistics for ", paste(files, collapse=" "), ". Please note that this step usually takes a few minutes due to the size of summary statistic files.", file=log.file)
-    ##note that fread is not used here due to formatting differences across summary statistic files
+    ## note that fread is not used here due to formatting differences across summary statistic files
     files <- lapply(files, read.table, header=T, quote="\"", fill=T, na.string=c(".", NA, "NA", ""))
     .LOG("All files loaded into R!", file=log.file)
     for(i in 1:length(files)) {
       .munge_main(i, NULL, files[[i]], filenames[i], trait.names[i], N[i], ref, hm3, info.filter, maf.filter, column.names, overwrite, log.file)
     }
   } else {
-    if(is.null(cores)){
-    ##if no default provided use 1 less than the total number of cores available so your computer will still function
-      int <- parallel::detectCores() - 1
-    }else{
-      int <- cores
-    }
+    if(is.null(cores)) {int <- parallel::detectCores() - 1}
+    else {int <- cores}
     if (int > length(filenames)) {
-      .LOG("Number of requested cores(", int, ") greater than the number of files (",length(filenames),"). Deferring to the lowest number",file=log.file)
+      .LOG("Number of requested cores(", int, ") greater than the number of files (", length(filenames),"). Deferring to the lowest number", file=log.file)
       int <- length(filenames)
     }
-    # Defaulting to PSOCK cluster as it should work on both Linux and Windows,
-    # and from my experience it's faster when not copying large ammounts of data
+    
+    # Defaulting to PSOCK cluster as it should work on both Linux and Windows and from my experience it's faster when not copying large amounts of data
     cl <- parallel::makeCluster(int, type="PSOCK")
     doParallel::registerDoParallel(cl)
     on.exit(parallel::stopCluster(cl))

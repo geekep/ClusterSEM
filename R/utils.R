@@ -6,6 +6,7 @@
 
 .get_renamed_colnames <- function(hold_names, userprovided, checkforsingle=c(), filename, N_provided, log.file,
                                   warnz=FALSE, warn_for_missing=c(), stop_on_missing=c(), utilfuncs=NULL) {
+  
   interpreted_names <- list(
     SNP=c("SNP","SNPID","RSID","RS_NUMBER","RS_NUMBERS", "MARKERNAME", "ID","PREDICTOR","SNP_ID", "VARIANTID", "VARIANT_ID", "RSIDS"),
     A1=c("A1", "ALLELE1","EFFECT_ALLELE","INC_ALLELE","REFERENCE_ALLELE","EA","REF"),
@@ -19,6 +20,7 @@
     SE=c("STDERR", "SE", "STDERRLOGOR", "SEBETA", "STANDARDERROR"),
     DIRECTION=c("DIRECTION", "DIREC", "DIRE", "SIGN")
   )
+  
   full_names <- list(
     P="P-value",
     A1="effect allele",
@@ -28,14 +30,17 @@
     SE="standard error",
     DIRECTION="direction"
   )
+  
   if (!is.null(utilfuncs)) {
     for (j in names(utilfuncs)) {
         assign(j, utilfuncs[[j]], envir=environment())
     }
   }
+  
   if (all(c("ALT", "REF") %in% hold_names)) {
     .LOG(paste0("Found REF and ALT columns in the summary statistic file ", filename, ". Please note that REF will be interpreted as A1 (effect allele) and ALT as A2 (other allele)"), print=TRUE, file=log.file)
   }
+  
   if (N_provided) {
     interpreted_names[["N"]] <- NULL
   } else {
@@ -46,6 +51,7 @@ Be aware that some NEFF columns reflect half of the effective sample size; the f
 If the Neff value is halved in the summary stats, but not recognized by the munge function, this should be manually doubled prior to running munge.", file=log.file)
     }
   }
+  
   for (col in names(interpreted_names)) {
     if (col %in% names(userprovided)) {
       .LOG("Interpreting the ",userprovided[[col]]," column as the ",col, " column, as requested",file=log.file)
@@ -73,6 +79,7 @@ If the Neff value is halved in the summary stats, but not recognized by the mung
       }
     }
   }
+  
   # Print log and throw warning messages if multiple or no columns were found for those specified in checkforsingle
   if (length(checkforsingle) > 0) {
     for (col in checkforsingle) {
@@ -86,6 +93,7 @@ If the Neff value is halved in the summary stats, but not recognized by the mung
       }
     }
   }
+  
   return(hold_names)
 }
 
@@ -111,114 +119,103 @@ If the Neff value is halved in the summary stats, but not recognized by the mung
 ##modification of trycatch that allows the results of a failed run to still be saved
 .tryCatch.W.E <- function(expr) {
     W <- NULL
-    w.handler <- function(w){ # warning handler
+    w.handler <- function(w) { # warning handler
       W <<- w
       invokeRestart("muffleWarning")
     }
+    
     list(value = withCallingHandlers(tryCatch(expr, error = function(e) e),
                                      warning = w.handler), warning = W)
 }
 
 .get_V_full <- function(k, V_LD, varSNPSE2, V_SNP) {
-    ##create shell of full sampling covariance matrix
-    V_Full<-diag(((k+1)*(k+2))/2)
-
-    ##input the ld-score regression region of sampling covariance from ld-score regression SEs
-    V_Full[(k+2):nrow(V_Full),(k+2):nrow(V_Full)]<-V_LD
-
-    ##add in SE of SNP variance as first observation in sampling covariance matrix
-    V_Full[1,1]<-varSNPSE2
-
-    ##add in SNP region of sampling covariance matrix
-    V_Full[2:(k+1),2:(k+1)]<-V_SNP
-    return(V_Full)
+  ##create shell of full sampling covariance matrix
+  V_Full <- diag(((k + 1) * (k + 2)) / 2)
+  
+  ##input the ld-score regression region of sampling covariance from ld-score regression SEs
+  V_Full[(k + 2):nrow(V_Full), (k + 2):nrow(V_Full)] <- V_LD
+  
+  ##add in SE of SNP variance as first observation in sampling covariance matrix
+  V_Full[1, 1] <- varSNPSE2
+  
+  ##add in SNP region of sampling covariance matrix
+  V_Full[2:(k + 1), 2:(k + 1)] <- V_SNP
+  
+  return(V_Full)
 }
 
 .get_V_SNP <- function(SE_SNP, I_LD, varSNP, GC, coords, k, i) {
-     V_SNP<-diag(k)
-    #loop to add in the GWAS SEs, correct them for univariate and bivariate intercepts, and multiply by SNP variance from reference panel
-    if(GC == "conserv"){
-      for (p in 1:nrow(coords)) {
-        x<-coords[p,1]
-        y<-coords[p,2]
-        if (x != y) {
-          V_SNP[x,y]<-(SE_SNP[i,y]*SE_SNP[i,x]*I_LD[x,y]*I_LD[x,x]*I_LD[y,y]*varSNP[i]^2)}
-        if (x == y) {
-          V_SNP[x,x]<-(SE_SNP[i,x]*I_LD[x,x]*varSNP[i])^2
-        }
-      }
+  
+  V_SNP <- diag(k)
+  #loop to add in the GWAS SEs, correct them for univariate and bivariate intercepts, and multiply by SNP variance from reference panel
+  if (GC == "conserv") {
+    for (p in 1:nrow(coords)) {
+      x <- coords[p, 1]
+      y <- coords[p, 2]
+      if (x != y) {V_SNP[x, y] <- (SE_SNP[i, y] * SE_SNP[i, x] * I_LD[x, y] * I_LD[x, x] * I_LD[y, y] * varSNP[i] ^ 2)}
+      if (x == y) {V_SNP[x, x] <- (SE_SNP[i, x] * I_LD[x, x] * varSNP[i]) ^ 2}
     }
-
-    if(GC == "standard"){
-      for (p in 1:nrow(coords)) {
-        x<-coords[p,1]
-        y<-coords[p,2]
-        if (x != y) {
-          V_SNP[x,y]<-(SE_SNP[i,y]*SE_SNP[i,x]*I_LD[x,y]*sqrt(I_LD[x,x])*sqrt(I_LD[y,y])*varSNP[i]^2)}
-        if (x == y) {
-          V_SNP[x,x]<-(SE_SNP[i,x]*sqrt(I_LD[x,x])*varSNP[i])^2
-        }
-      }
+  }
+  
+  if (GC == "standard") {
+    for (p in 1:nrow(coords)) {
+      x <- coords[p, 1]
+      y <- coords[p, 2]
+      if (x != y) {V_SNP[x, y] <- (SE_SNP[i, y] * SE_SNP[i, x] * I_LD[x, y] * sqrt(I_LD[x, x]) * sqrt(I_LD[y, y]) * varSNP[i] ^ 2)}
+      if (x == y) {V_SNP[x, x] <- (SE_SNP[i, x] * sqrt(I_LD[x, x]) * varSNP[i]) ^ 2}
     }
-
-    if(GC == "none"){
-      for (p in 1:nrow(coords)) {
-        x<-coords[p,1]
-        y<-coords[p,2]
-        if (x != y) {
-          V_SNP[x,y]<-(SE_SNP[i,y]*SE_SNP[i,x]*I_LD[x,y]*varSNP[i]^2)}
-        if (x == y) {
-          V_SNP[x,x]<-(SE_SNP[i,x]*varSNP[i])^2
-        }
-      }
+  }
+  
+  if (GC == "none") {
+    for (p in 1:nrow(coords)) {
+      x <- coords[p, 1]
+      y <- coords[p, 2]
+      if (x != y) {V_SNP[x, y] <- (SE_SNP[i, y] * SE_SNP[i, x] * I_LD[x, y] * varSNP[i] ^ 2)}
+      if (x == y) {V_SNP[x, x] <- (SE_SNP[i, x] * varSNP[i]) ^ 2}
     }
-    return(V_SNP)
+  }
+  
+  return(V_SNP)
 }
 
-.get_S_Full<-function(n_phenotypes, S_LD, varSNP, beta_SNP, TWAS, i){
+.get_S_Full<-function(n_phenotypes, S_LD, varSNP, beta_SNP, TWAS, i) {
+  
   #create empty vector for S_SNP
-  S_SNP <- vector(mode="numeric",length=n_phenotypes+1)
+  S_SNP <- vector(mode = "numeric", length = n_phenotypes + 1)
 
-#enter SNP variance from reference panel as first observation
-S_SNP[1] <- varSNP[i]
-
-#enter SNP covariances (standardized beta * SNP variance from refference panel)
-for (p in 1:n_phenotypes) {
-  S_SNP[p+1] <- varSNP[i]*beta_SNP[i,p]
-}
-
-#create shell of the full S (observed covariance) matrix
-S_Full <- diag(n_phenotypes+1)
-
-##add the LD portion of the S matrix
-S_Full[(2:(n_phenotypes+1)),(2:(n_phenotypes+1))] <- S_LD
-
-##add in observed SNP variances as first row/column
-S_Full[1:(n_phenotypes+1),1] <- S_SNP
-S_Full[1,1:(n_phenotypes+1)] <- t(S_SNP)
-
-##pull in variables names specified in LDSC function and name first column as SNP
-if(TWAS){
-  colnames(S_Full) <- c("Gene", colnames(S_LD))
-} else {
-  colnames(S_Full) <- c("SNP", colnames(S_LD))
-}
-
-##name rows like columns
-rownames(S_Full) <- colnames(S_Full)
-
-return(S_Full)
+  #enter SNP variance from reference panel as first observation
+  S_SNP[1] <- varSNP[i]
+  
+  #enter SNP covariances (standardized beta * SNP variance from reference panel)
+  for (p in 1:n_phenotypes) {S_SNP[p + 1] <- varSNP[i] * beta_SNP[i, p]}
+  
+  #create shell of the full S (observed covariance) matrix
+  S_Full <- diag(n_phenotypes + 1)
+  
+  ##add the LD portion of the S matrix
+  S_Full[(2:(n_phenotypes + 1)), (2:(n_phenotypes + 1))] <- S_LD
+  
+  ##add in observed SNP variances as first row/column
+  S_Full[1:(n_phenotypes + 1), 1] <- S_SNP
+  S_Full[1, 1:(n_phenotypes + 1)] <- t(S_SNP)
+  
+  ##pull in variables names specified in LDSC function and name first column as SNP
+  if (TWAS) {colnames(S_Full) <- c("Gene", colnames(S_LD))}
+  else {colnames(S_Full) <- c("SNP", colnames(S_LD))}
+  
+  ##name rows like columns
+  rownames(S_Full) <- colnames(S_Full)
+  
+  return(S_Full)
 }
 
 .get_Z_pre <- function(i, beta_SNP, SE_SNP, I_LD, GC) {
-    if(GC == "conserv"){
-        Z_pre<-beta_SNP[i,]/(SE_SNP[i,]*diag(I_LD))
-    }
-    if(GC=="standard"){
-        Z_pre<-beta_SNP[i,]/(SE_SNP[i,]*sqrt(diag(I_LD)))
-    }
-    if(GC=="none"){
-        Z_pre<-beta_SNP[i,]/SE_SNP[i,]
-    }
-    return(Z_pre)
+  
+  if (GC == "conserv") {Z_pre <- beta_SNP[i,] / (SE_SNP[i,] * diag(I_LD))}
+  
+  if (GC == "standard") {Z_pre <- beta_SNP[i,] / (SE_SNP[i,] * sqrt(diag(I_LD)))}
+  
+  if (GC == "none") {Z_pre <- beta_SNP[i,] / SE_SNP[i,]}
+  
+  return(Z_pre)
 }

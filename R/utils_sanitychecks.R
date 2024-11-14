@@ -20,15 +20,15 @@
       if (!(is.numeric(val))) stop(paste("Value(s) of", name,"should be numeric"), call.=FALSE)
       if (inclusive) {
         if (val <= min) {
-          stop(paste("Value(s) of", name,"should be above",min), call.=FALSE)
+          stop(paste("Value(s) of", name, "should be above", min), call.=FALSE)
         } else if (val >= max) {
-          stop(paste("Value(s) of", name,"should be below",max), call.=FALSE)
+          stop(paste("Value(s) of", name, "should be below", max), call.=FALSE)
         }
       } else {
         if (val < min) {
-          stop(paste("Value(s) of", name,"should be above",min), call.=FALSE)
+          stop(paste("Value(s) of", name, "should be above", min), call.=FALSE)
         } else if (val > max) {
-          stop(paste("Value(s) of", name,"should be below",max), call.=FALSE)
+          stop(paste("Value(s) of", name, "should be below", max), call.=FALSE)
         }
       }
     }
@@ -41,7 +41,7 @@
     for (x in path) {.check_file_exists(x, name=name)}
   } else {
     if (!(file.exists(path))) {
-      stop(paste("File", path, "passed to", name,"does not exist"), call.=FALSE)
+      stop(paste("File", path, "passed to", name, "does not exist"), call.=FALSE)
     }
   }
 }
@@ -51,16 +51,12 @@
   if (length(val) > 1) {
     for (x in val) {.check_boolean(x, name=name)}
   } else {
-    if (!(val %in% c(TRUE, FALSE))) {
-      stop(paste(name, "should be TRUE or FALSE"))
-    }
+    if (!(val %in% c(TRUE, FALSE))) {stop(paste(name, "should be TRUE or FALSE"))}
   }
 }
 
 .check_one_of <- function(val, one_of) {
   name <- deparse(substitute(val))
-  if (sum(one_of == val) != 1) {
-    stop(paste(name, "should be one of the following values:\n",paste(one_of, collapse=", ")))
-  }
+  if (sum(one_of == val) != 1) {stop(paste(name, "should be one of the following values:\n", paste(one_of, collapse=", ")))}
 }
 
