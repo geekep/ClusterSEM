@@ -10,7 +10,7 @@ usermodel(
   model = "",
   CFIcalc = TRUE,
   std.lv = FALSE,
-  imp_cov = FALSE,
+  imp_cov = TRUE,
   fix_resid = TRUE,
   toler = NULL
 )

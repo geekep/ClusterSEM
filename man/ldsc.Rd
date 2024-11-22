@@ -43,7 +43,7 @@ ldsc(
 
 \item{stand}{If you want to output the standard errors (SE) of the ld-score regression in the order they are listed in the genetic covariance matrix (i.e., S). Default to TRUE.}
 
-\item{select}{default to FALSE}
+\item{select}{default to FALSE, option: EVEN, ODD, c(...)}
 
 \item{chisq.max}{default to NA}
 }

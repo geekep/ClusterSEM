@@ -1,7 +1,6 @@
-
-#extract trait.names and N for the munge function
+# extract trait.names and N for the munge function
 Aptamers.path <- 'D:\\Aptamers'
-files <- list.files(Aptamers.path)
+files <- list.files(Aptamers.path, pattern='.txt.csv.last')
 aptamer.trait.names <- NULL
 aptamers.N <- NULL
 for (f in seq_along(files)) {
@@ -10,7 +9,7 @@ for (f in seq_along(files)) {
   aptamers.N <- c(aptamers.N, as.numeric(tail(strsplit(LINE, '\t')[[1]], 1)))
 }
 
-#munge the summary statistics
+# munge the summary statistics
 munge(
   files = paste0(Aptamers.path, "\\", files),
   hm3 = "D:\\eur_w_ld_chr\\w_hm3.snplist",
@@ -25,11 +24,16 @@ munge(
   overwrite = TRUE
 )
 
-#ldsc
+# ldsc
+Aptamers.munged.path <- '/Volumes/Elements/sumstats'
+Aptamers.munged.files <- list.files(path=Aptamers.munged.path, pattern='.sumstats.gz', full.names=TRUE)
+aptamer.trait.names <- NULL
+files <- list.files(path=Aptamers.munged.path, pattern='.sumstats.gz')
+for(f in seq_along(files)) {aptamer.trait.names <- c(aptamer.trait.names, strsplit(files[f], '\\.')[[1]][1])}
 aptamers.ldsc <- ldsc(
-  traits = paste0(Aptamers.path, '\\', aptamer.trait.names, '.sumstats.gz'),
-  ld = "D:\\eur_w_ld_chr",
-  wld = "D:\\eur_w_ld_chr",
+  traits = Aptamers.munged.files,
+  ld = "/Users/zhenxu/R-workspace/eur_w_ld_chr",
+  wld = "/Users/zhenxu/R-workspace/eur_w_ld_chr",
   sample.prev = rep(NA, length(aptamer.trait.names)),
   population.prev = rep(NA, length(aptamer.trait.names)),
   trait.names = paste0("aptamer_", aptamer.trait.names),
@@ -87,9 +91,9 @@ pheatmap(
 
 # Hierarchical Exploratory Factor Analysis (H-EFA) using BIRCH clustering
 aptamers.ldsc.CFTree <- BirchCF(x=as.data.frame(aptamers.ldsc$corMatirx),
-                            Type = 'df',
-                            branchingfactor = 6,
-                            threshold = 0.01)
+                                Type = 'df',
+                                branchingfactor = 6,
+                                threshold = 0.01)
 
 # Specify the genomic confirmatory factor model
 aptamers.ldsc.CFAofEFA <- write.model(S_LD=aptamers.ldsc$S, clusters=list(size=sc@size, .Data=sc@.Data), common = FALSE, hierarchical = FALSE, fix_resid = TRUE)

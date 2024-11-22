@@ -1,11 +1,13 @@
 # main function of user munge function
-.munge_main <- function(i, utilfuncs, file, filename, trait.name, N, ref, hm3, info.filter, maf.filter, column.names, overwrite, log.file=NULL) {
+.munge_main <- function(i, utilfuncs, file, filename, trait.name, N, ref, hm3, info.filter, maf.filter, column.names, overwrite, output.path, log.file=NULL) {
   
+  # check overwrite
   .check_boolean(overwrite)
   if (!overwrite) {
     if (file.exists(paste0(trait.name, ".sumstats.gz"))) return()
   }
   
+  # check log.file
   if (is.null(log.file)) {
     log.file <- file(paste0(trait.name, "_munge.log"), open="wt")
     on.exit(flush(log.file))
@@ -14,16 +16,23 @@
     .LOG("\n\n", file=log.file, print=FALSE)
   }
   
+  # check N
+  N_provided <- (!is.na(N))
+  if (N_provided) {
+    file$N <- N
+    .LOG("Using provided N (", N, ") for file:", filename, file=log.file)
+  }
+  
+  # check utilfuncs
   if (!is.null(utilfuncs)) {
     for (j in names(utilfuncs)) {assign(j, utilfuncs[[j]], envir=environment())}
   }
   
+  # check file
   if (is.null(file)) {
     file <- read.table(filename, header=T, quote="\"", fill=T, na.strings=c(".", NA, "NA", ""))
   }
   .LOG("Munging file: ", filename, file=log.file)
-
-  N_provided <- (!is.na(N))
   
   colnames(file) <- toupper(colnames(file))
   if("NEFFDIV2" %in% colnames(file)) {
@@ -46,11 +55,6 @@ Please note that this is likely effective sample size cut in half. The function 
                                       warn_for_missing = c("P", "A1", "A2", "effect", "SNP", "N"),
                                       utilfuncs = utilfuncs, log.file = log.file)
   colnames(file) <- hold_names
-  
-  if (N_provided) {
-    file$N <- N
-    .LOG("Using provided N (", N, ") for file:", filename, file=log.file)
-  }
 
   ## make sure MAF is actually MAF (i.e., max value is .5 or less)
   if("MAF" %in% colnames(file)) {file$MAF <- ifelse(file$MAF <= .5, file$MAF, (1-file$MAF))}
@@ -59,7 +63,7 @@ Please note that this is likely effective sample size cut in half. The function 
   file$A1 <- factor(toupper(file$A1), c("A", "C", "G", "T"))
   file$A2 <- factor(toupper(file$A2), c("A", "C", "G", "T"))
   
-  ## merge with ref file
+  ## merge with hm3 reference file
   .LOG("Merging file:", filename, " with the reference file:", hm3, file=log.file)
   b <- nrow(file)
   .LOG(b, " rows present in the full ", filename, " summary statistics file.", file=log.file)
@@ -87,14 +91,14 @@ Please note that this is likely effective sample size cut in half. The function 
   # Flip effect to match ordering in ref file
   file$effect <- ifelse(file$A1.x != (file$A1.y) & file$A1.x == (file$A2.y), file$effect * -1, file$effect)
   
-  ## remove SNPs that don't match A1 OR A2 in reference file.
+  ## remove SNPs that don't match A1 OR A2 in reference file
   b <- nrow(file)
   file <- subset(file, !(file$A1.x != (file$A1.y)  & file$A1.x != (file$A2.y)))
   if (b-nrow(file) > 0)
     .LOG(b-nrow(file), " row(s) were removed from the ", filename,
          " summary statistics file due to the effect allele (A1) column not matching A1 or A2 in the reference file.",
          file = log.file)
-
+  
   b <- nrow(file)
   file <- subset(file, !(file$A2.x != (file$A2.y) & file$A2.x !=  (file$A1.y)))
   if (b-nrow(file) > 0)
@@ -104,22 +108,22 @@ Please note that this is likely effective sample size cut in half. The function 
   
   
   ####VALIDITY CHECKS#####
-  #Check that p-value column does not contain an excess of 1s/0s
+  # Check that p-value column does not contain an excess of 1s/0s
   if((sum(file$P > 1) + sum(file$P < 0)) > 100) {
     .LOG("In excess of 100 SNPs have P val above 1 or below 0. The P column may be mislabled!", file=log.file)
   }
  
-  #Compute Z score
+  # Compute Z score
   file$Z <- sign(file$effect) * sqrt(qchisq(file$P, 1, lower.tail = F))
   
-  ##filter on INFO column at designated threshold provided for the info.filter argument (default = 0.9)
+  ## filter on INFO column at designated threshold provided for the info.filter argument (default = 0.9)
   if("INFO" %in% colnames(file)) {
     b <- nrow(file)
     file <- file[file$INFO >= info.filter, ]
     .LOG(b-nrow(file), " rows were removed from the ", filename, " summary statistics file due to INFO values below the designated threshold of", info.filter, file=log.file)
   } else {.LOG("No INFO column, cannot filter on INFO, which may influence results", file=log.file)}
   
-  ##filter on MAF filter at designated threshold provided for the maf.filter argument (default = 0.01)
+  ## filter on MAF filter at designated threshold provided for the maf.filter argument (default = 0.01)
   if("MAF" %in% colnames(file)) {
     file$MAF <- as.numeric(as.character(file$MAF))
     b <- nrow(file)
@@ -141,10 +145,10 @@ Please note that this is likely effective sample size cut in half. The function 
   # remove spaces in trait.names file to avoid errors with fread functionality used for s_ldsc
   trait.name <- stringr::str_replace_all(trait.name, stringr::fixed(" "), "")
   
-  write.table(x = output, file = paste0(trait.name,".sumstats"), sep="\t", quote = FALSE, row.names = F)
-  R.utils::gzip(paste0(trait.name,".sumstats"), overwrite=overwrite)
+  write.table(x = output, file = paste0(output.path,'/',trait.name,".sumstats"), sep="\t", quote = FALSE, row.names = F)
+  R.utils::gzip(paste0(output.path,'/',trait.name,".sumstats"), overwrite=overwrite)
   .LOG("I am done munging file: ", filename, file=log.file)
-  .LOG("The file is saved as ", paste0(trait.name,".sumstats.gz"), " in the current working directory.", file=log.file)
+  .LOG("The file is saved as ", paste0(output.path,'/',trait.name,".sumstats.gz"), " in the current working directory.", file=log.file)
   
   return()
 }

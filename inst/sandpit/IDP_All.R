@@ -1,3 +1,4 @@
+# extract trait.names and N for the munge function
 IDP.path <- '/storageB/xuzhen/IDP'
 files <- list.files(IDP.path)
 IDP.trait.names <- NULL
@@ -8,7 +9,7 @@ for (f in seq_along(files)) {
   IDP.N <- c(IDP.N, as.numeric(tail(strsplit(LINE, '\t')[[1]], 1)))
 }
 
-#munge the summary statistics
+# munge the summary statistics
 munge(
   files = paste0(IDP.path, '/', files),
   hm3 = "~/ClusterSEM/data/eur_w_ld_chr/w_hm3.snplist",
@@ -24,13 +25,18 @@ munge(
 
 # ldsc
 IDP.munged.path <- '/storageB/xuzhen/IDP_sumstat'
-munged.files <- list.files(path=IDP.munged.path, pattern = '.sumstats.gz', full.names = TRUE)
+IDP.munged.files <- list.files(path=IDP.munged.path, pattern = '.sumstats.gz', full.names = TRUE)
+IDP.trait.names <- NULL
+files <- list.files(path=IDP.munged.path, pattern='.sumstats.gz')
+for(f in seq_along(files)) {
+  IDP.trait.names <- c(IDP.trait.names, strsplit(files[f], '\\.')[[1]][1])
+}
 IDP <- ldsc(
-  traits = munged.files,
+  traits = IDP.munged.files,
   ld = "~/ClusterSEM/data/eur_w_ld_chr",
   wld = "~/ClusterSEM/data/eur_w_ld_chr",
-  sample.prev = rep(NA, length(munged.files)),
-  population.prev = rep(NA, length(munged.files)),
+  sample.prev = rep(NA, length(IDP.trait.names)),
+  population.prev = rep(NA, length(IDP.trait.names)),
   trait.names = paste0('pheno', IDP.trait.names), 
   sep_weights = FALSE,
   chr = 22,

@@ -15,7 +15,8 @@ munge(
   column.names = list(),
   parallel = FALSE,
   cores = NULL,
-  overwrite = TRUE
+  overwrite = TRUE,
+  output.path = NULL
 )
 }
 \arguments{
@@ -40,6 +41,8 @@ munge(
 \item{cores}{default to NULL}
 
 \item{overwrite}{default to TRUE}
+
+\item{output.path}{default to NULL (the current working directory)}
 }
 \value{
 The function writes files of the ".sumstats.gz" format, which can be used to estimate SNP heritability and genetic covariance using the ldsc() function. The function will also output a .log file that should be examined to ensure that column names are being interpret correctly.

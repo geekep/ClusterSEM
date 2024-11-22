@@ -12,6 +12,7 @@
 #' @param parallel default to FALSE
 #' @param cores default to NULL
 #' @param overwrite default to TRUE
+#' @param output.path default to NULL (the current working directory)
 #'
 #' @return The function writes files of the ".sumstats.gz" format, which can be used to estimate SNP heritability and genetic covariance using the ldsc() function. The function will also output a .log file that should be examined to ensure that column names are being interpret correctly.
 #' @export
@@ -25,7 +26,8 @@ munge <- function(files,
                   column.names = list(),
                   parallel = FALSE,
                   cores = NULL,
-                  overwrite = TRUE) {
+                  overwrite = TRUE,
+                  output.path = NULL) {
   
   # check files
   if (is.list(files)) {
@@ -66,7 +68,7 @@ munge <- function(files,
     log.file <- file(paste0(log.name, "_munge.log"), open = "wt")
   }
   
-  # check hm3
+  # check overwrite
   existing_traits <- c()
   if (overwrite) {
     existing_files <- c()
@@ -98,15 +100,15 @@ munge <- function(files,
     .LOG("Reading summary statistics for ", paste(files, collapse=" "), ". Please note that this step usually takes a few minutes due to the size of summary statistic files.", file=log.file)
     ## note that fread is not used here due to formatting differences across summary statistic files
     files <- lapply(files, read.table, header=T, quote="\"", fill=T, na.string=c(".", NA, "NA", ""))
-    .LOG("All files loaded into R!", file=log.file)
+    .LOG("All summary statistic files are loaded into R!", file=log.file)
     for(i in 1:length(files)) {
-      .munge_main(i, NULL, files[[i]], filenames[i], trait.names[i], N[i], ref, hm3, info.filter, maf.filter, column.names, overwrite, log.file)
+      .munge_main(i, NULL, files[[i]], filenames[i], trait.names[i], N[i], ref, hm3, info.filter, maf.filter, column.names, overwrite, output.path, log.file)
     }
   } else {
     if(is.null(cores)) {int <- parallel::detectCores() - 1}
     else {int <- cores}
     if (int > length(filenames)) {
-      .LOG("Number of requested cores(", int, ") greater than the number of files (", length(filenames),"). Deferring to the lowest number", file=log.file)
+      .LOG("Number of requested cores(", int, ") greater than the number of files (", length(filenames), "). Deferring to the lowest number", file=log.file)
       int <- length(filenames)
     }
     
@@ -121,7 +123,7 @@ munge <- function(files,
     utilfuncs[["gzip"]] <- R.utils::gzip
     .LOG("As parallel munging was requested, logs of each sumstats file will be saved separately", file=log.file)
     foreach::foreach (i=1:length(filenames), .export=c(".munge_main"), .packages=c("stringr")) %dopar% {
-      .munge_main(i, utilfuncs, NULL, filenames[i], trait.names[i], N[i], ref, hm3, info.filter, maf.filter, column.names, overwrite, NULL)
+      .munge_main(i, utilfuncs, NULL, filenames[i], trait.names[i], N[i], ref, hm3, info.filter, maf.filter, column.names, overwrite, output.path, NULL)
     }
   }
   

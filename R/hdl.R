@@ -1,76 +1,74 @@
-#' Estimate a genetic covariance matrix using High Definition Likelihood (HDL) based on the work by Ning, Pawitan and Shen, Nature Genetics (2020)
-#' @description Function to run HDL (https://github.com/zhenin/HDL) to compute the genetic covariance between a series of traits based on genome wide summary statistics obtained from GWAS. HDL is more powerful than LDSC but if the LD structure in the reference file mismatches the GWAS LD structure, LDSC seems to perform better, especially for estimates of heritability. For medium samples (N > 50,000) with moderate SNP-h2 (snp h2 > 0.07) where the LD structure isn't similar, we would recommend ldsc, especially for GWAS. If you have small GWAS (N < 25,000), the extra power HDL provides is worth the downward bias in snp h^2 estimates relative to ldsc.
+#' Estimate a genetic covariance matrix using High Definition Likelihood (HDL) based on the work by Ning, Pawitan and Shen, Nature Genetics, 2020
+#' @description Function to run HDL (https://github.com/zhenin/HDL) to compute the genetic covariance between a series of traits based on genome-wide summary statistics. HDL is more powerful than LDSC but if the LD structure in the reference file mismatches the LD structure in GWAS and LDSC seems to perform better especially for estimation of heritability. For medium samples (N > 50,000) with moderate snp h^2 (> 0.07) where the LD structure isn't similar, we would recommend ldsc. If you have small GWAS (N < 25,000), the extra statistical power which HDL provides is worth the downward bias in snp h^2 estimation relative to ldsc.
+#' @references Ning, Z., Pawitan, Y. & Shen, X. High-definition likelihood inference of genetic correlations across human complex traits. Nat Genet (2020).
 #' 
 #' @param traits A vector of strings which point to munged files for trait you want to include in a SEM model. The HDL function works with standard munged files.
 #' @param sample.prev A vector of sample prevalence for dichotomous traits and NA for continuous traits
 #' @param population.prev A vector of population prevalence for dichotomous traits and NA for continuous traits
-#' @param trait.names A character vector specifying how the traits should be named in the genetic covariance matrix (i.o. S). These variable names can subsequently be used in later steps for model specification. If no value is provided, the function will automatically name the variables using the generic from of V1-VX.
+#' @param trait.names A character vector specifying how the traits should be named in the genetic covariance matrix (i.e., S). These variable names can subsequently be used in later steps for model specification. If no value is provided, the function will automatically name the variables using the generic from of V1-VX.
 #' @param LD.path String which contains the path to the folder in which the LD matrices used in the analysis are located.
 #' @param Nref Sample size of the reference file, default is 335265
-#' @param method String, either "piecewise" which estimates the heritability or genetic covariance locally in chunks across the genome and then sums these estimates, or "jackknife" which uses a genome wide estiamte and uses a jackknife estimator for the variance of the parameter. defaults to "piecewise" the original HDL implementation is equal to "jackknife"
+#' @param method Defaults to "piecewise". Either "piecewise" which estimates the heritability or genetic covariance locally in chunks across the genome and then sums these estimates, or "jackknife" which uses a genome-wide estimate and uses a jackknife estimator for the variance of the parameter (the original HDL implementation is equal to "jackknife"). 
 #'
 #' @return  The function returns a list with 3 named entries
-#' @return  S	estimated genetic covariance matrix
-#' @return  V	variance covariance matrix of the parameter estimates in S
+#' @return  S	estimated genetic variance/covariance matrix
+#' @return  SE variance matrix of the estimated parameter in S
 #' @return  I  matrix containing the "cross trait intercepts", or the error covariance between traits induced by overlap, in terms of subjects, between the GWAS on which the analyses are based
 #' 
 #' @export
-#'
-#' @references Ning, Z., Pawitan, Y. & Shen, X. High-definition likelihood inference of genetic correlations across human complex traits. Nat Genet (2020).
-hdl <- function(traits, sample.prev = NA, population.prev = NA,
-                trait.names = NULL, LD.path, Nref = 335265, method = "piecewise") {
-
-  ### Do some data wrangling for the LD files:
-  cat("ClusterSEM multivariable HDL function, based on the original implmentation of HDL please cite: Ning, Pawitan & Shen, Nature Genetics (2020)")
+hdl <- function(traits, sample.prev = NA, population.prev = NA, trait.names = NULL,
+                LD.path, Nref = 335265, method = "piecewise", hdl.log = NULL) {
   
-  if(is.null(trait.names)){
-    traits2 <- paste0("V", 1:length(traits))
-    trat.names <- traits2
+  # check traits
+  if(length(traits) == 1) {warning("Our version of hdl requires 2 or more traits. Please include an additional trait.")}
+  
+  # check trait.names
+  if(is.null(trait.names)) {trait.names <- paste0("V", 1:length(traits))}
+  if(!(is.null(trait.names))) {
+    check_names <- stringr::str_detect(trait.names, "-")
+    if(any(check_names == TRUE)) {warning("Your trait names specified include mathematical arguments (e.g., + or -) that will be misread by lavaan. Please rename the traits using the trait.names argument.")}
   }
   
+  # check LD.path
   LD.files <- list.files(LD.path)
-  
   if(any(grepl(x = LD.files, pattern = "UKB_snp_counter.*"))) {
     snp_counter_file <- LD.files[grep(x = LD.files, pattern = "UKB_snp_counter.*")]
     snp_list_file <- LD.files[grep(x = LD.files, pattern = "UKB_snp_list.*")]
     load(file = paste(LD.path, snp_counter_file, sep = "/"))
     load(file = paste(LD.path, snp_list_file, sep = "/"))
     if ("nsnps.list.imputed" %in% ls()) {
-      # External variables: snps.list.imputed.vector and nsnps.list.imputed
+      # snps.list.imputed.vector and nsnps.list.imputed are global variables.
       snps.name.list <- snps.list.imputed.vector
       nsnps.list <- nsnps.list.imputed
     }
-  } else {
-    stop("It seems this directory does not contain all files needed for HDL. Please check your LD.path again. The version of HDL implementerd in ClusterSEM only support pre-computed LD reference panels.")
-  }
+  } else {stop("It seems this directory does not contain all files needed for HDL. Please check your LD.path again. The version of HDL implementerd in ClusterSEM only support pre-computed LD reference panels.")}
   
-  num.pieces <- length(unlist(nsnps.list))
+  # check hdl.log
+  if(is.null(hdl.log)) {
+    logtraits <- gsub(".*/", "", traits)
+    log2 <- paste(logtraits, collapse = "_")
+    if (object.size(log2) > 200) {log2 <- substr(log2, 1, 100)}
+    log.file <- file(paste0(log2, "_hdl.log"), open="wt")
+  } else {log.file <- file(paste0(ldsc.log, "_hdl.log"), open="wt")}
   
   # Dimensions of S and V matrix
   n.traits <- length(traits)
-  n.V <- (n.traits ^ 2 / 2) + .5 * n.traits
-  
-  if(!(is.null(trait.names))) {
-    check_names <- stringr::str_detect(trait.names, "-")
-    if(any(check_names==TRUE)) {warning("Your trait names specified include mathematical arguments (e.g., + or -) that will be misread by lavaan. Please rename the traits using the trait.names argument.")}
-  }
-  
-  if(length(traits) == 1) {warning("Our version of hdl requires 2 or more traits. Please include an additional trait.")}
+  n.V <- n.traits * (n.traits + 1) / 2
   
   # Vector and Matrix Storage
   Liab.S <- matrix(1, nrow = 1, ncol = n.traits)
   N.vec <- matrix(NA, nrow = 1, ncol = n.V)
   S <- cov <- matrix(NA, nrow = n.traits, ncol = n.traits)
   I <- matrix(NA, nrow = n.traits, ncol = n.traits)
+  num.pieces <- length(unlist(nsnps.list))
   V.hold <- matrix(NA, nrow = num.pieces, ncol = n.V)
   complete <- matrix(1, nrow = 1, ncol = n.traits)
 
+
+  ##### Start with general utility functions needed for hdl and standard errors
   
-  # Start with general utility functions needed for hdl and standard errors
-  
-  #### Define the likelihood function to be optimized for h2:
-  llfun <-
-    function(param, N, M, Nref = 1000, lam, bstar, lim = exp(-10)) {
+  ## Define the likelihood function to be optimized for heritability (h^2):
+  llfun <- function(param, N, M, Nref = 1000, lam, bstar, lim = exp(-10)) {
       h2 <- param[1]
       int <- param[2]
       lamh2 <- h2 / M * lam ^ 2 - h2 * lam / Nref + int * lam / N
@@ -79,7 +77,7 @@ hdl <- function(traits, sample.prev = NA, population.prev = NA,
       return(ll)
     }
   
-  #### Define the likelihood function to be optimized for genetic covariance:
+  ## Define the likelihood function to be optimized for genetic covariance:
   llfun.gcov.part.2 <- function(param, h11, h22, rho12, M, N1, N2, N0, Nref,
                                 lam0, lam1, lam2, bstar1, bstar2, lim = exp(-10)) {
       h12 <- param[1]
@@ -92,12 +90,10 @@ hdl <- function(traits, sample.prev = NA, population.prev = NA,
       lam11 <- ifelse(lam11 < lim, lim, lam11)
       lam22 <- h22[1] / M * lam2 ^ 2 - h22[1] * lam2 / Nref + h22[2] * lam2 / N2
       lam22 <- ifelse(lam22 < lim, lim, lam22)
-      #lam12 = h12/M*lam1*lam2 - p1*p2*h12*lam1/Nref + p1*p2*int*lam1/N0
-      if (N0 > 0)
-        ## key change here
-        lam12 <- h12 / M * lam1 * lam2 + p1 * p2 * int * lam1 / N0
-      if (N0 == 0)
-        lam12 <- h12 / M * lam1 * lam2
+      # lam12 = h12 / M * lam1 * lam2 - p1 * p2 * h12 * lam1 / Nref + p1 * p2 * int * lam1 / N0
+      ## key change here
+      if (N0 > 0) {lam12 <- h12 / M * lam1 * lam2 + p1 * p2 * int * lam1 / N0}
+      if (N0 == 0) {lam12 <- h12 / M * lam1 * lam2}
       ## resid of bstar2 ~ bstar1
       ustar <- bstar2 - lam12 / lam11 * bstar1  ## see note
       lam22.1 <- lam22 - lam12 ^ 2 / lam11
@@ -106,7 +102,7 @@ hdl <- function(traits, sample.prev = NA, population.prev = NA,
       return(ll)
     }
 
-  ################# Begin the loop to compute S and V cell by cell using HDL
+  ##### Begin the loop to compute S and V cell by cell using HDL
   # count for elements in V
   s <- 1
   for (j in 1:n.traits) {
@@ -184,7 +180,7 @@ hdl <- function(traits, sample.prev = NA, population.prev = NA,
           }
         }
         
-        # This runs the optimization at once for the entire genome, and computes the V via jackknife. Its HDL default behavior, but not ClusterSEM default behavior.
+        ## This runs the optimization at once for the entire genome and computes the matrix V via jackknife which is HDL default behavior, but not ClusterSEM default behavior.
         if (method == "jackknife") {
           M.ref <- sum(unlist(nsnps.list))
           
@@ -457,7 +453,7 @@ hdl <- function(traits, sample.prev = NA, population.prev = NA,
     samp.prev <- sample.prev[z]
     
     if (is.na(pop.prev) == F & is.na(samp.prev) == F) {
-      conversion.factor <- (pop.prev ^ 2 * (1 - pop.prev) ^ 2) / (samp.prev * (1 - samp.prev) * dnorm(qnorm(1 - pop.prev)) ^ 2)
+      conversion.factor <- (pop.prev^2 * (1-pop.prev)^2) / (samp.prev*(1-samp.prev) * dnorm(qnorm(1-pop.prev))^2)
       Liab.S[, z] <- conversion.factor
     }
   }
@@ -468,22 +464,22 @@ hdl <- function(traits, sample.prev = NA, population.prev = NA,
   ### Scale S and V to liability:
   S <- diag(as.vector(sqrt(Liab.S))) %*% S %*% diag(as.vector(sqrt(Liab.S)))
   
-  #calculate the ratio of the re-scaled and original S matrices
+  # calculate the ratio of the re-scaled and original S matrices
   scaleO <- as.vector(gdata::lowerTriangle((S / S2), diag = T))
   
-  #obtain diagonals of the original V matrix and take their sqrt to get SE's
+  # obtain diagonals of the original V matrix and take their sqrt to get SE's
   Dvcov <- sqrt(diag(V))
   
-  #re-scale the SEs by the same multiples that the S matrix was re-scaled by
+  # re-scale the SEs by the same multiples that the S matrix was re-scaled by
   Dvcovl <- as.vector(Dvcov * t(scaleO))
   
-  #obtain the sampling correlation matrix by standardizing the original V matrix
+  # obtain the sampling correlation matrix by standardizing the original V matrix
   vcor <- cov2cor(V)
   
-  #re-scale the sampling correlation matrix by the appropriate diagonals
+  # re-scale the sampling correlation matrix by the appropriate diagonals
   V <- diag(Dvcovl) %*% vcor %*% diag(Dvcovl)
   
   colnames(S) <- trait.names
   
-  return(list(V = V, S = S, I = I, complete = complete))
+  return(list(V=V, S=S, I=I, complete=complete))
 }
