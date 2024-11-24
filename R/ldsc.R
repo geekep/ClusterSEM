@@ -62,6 +62,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
 
   if(n.traits > 18) {
     n.blocks <- (((n.traits + 1) * (n.traits + 2)) / 2) + 1
+    n.blocks <- min(n.blocks, 1500)
     .LOG("     ", file=log.file, print=FALSE)
     .LOG("Setting the number of blocks used to perform the block jacknife used to estimate the sampling covariance matrix (V) to ", n.blocks, file=log.file)
     .LOG("This reflects the need to estimate V using at least one more block then they are nonredundant elements in the genetic covariance matrix that includes individual SNPs.", file=log.file)
@@ -78,7 +79,6 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
   SE <- matrix(NA, nrow=n.traits, ncol=n.traits)
   I <- matrix(NA, nrow=n.traits, ncol=n.traits)
   N.vec <- matrix(NA, nrow=1, ncol=n.V)
-  ## When n.traits > 18, n.blocks will be recalculated to very huge number and system cannot allocate vector of such size.
   # V.hold <- matrix(NA, nrow=n.blocks, ncol=n.V)
   # V.hold <- bigmemory::big.matrix(nrow=n.blocks, ncol=n.V, type="double", init=NULL, separated=FALSE, backingfile=NULL, backingpath='/Volumes/Elements', descriptorfile=NULL, binarydescriptor=FALSE, shared=TRUE)
   
