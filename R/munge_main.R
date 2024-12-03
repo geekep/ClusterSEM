@@ -1,5 +1,6 @@
 # main function of user munge function
-.munge_main <- function(i, utilfuncs, file, filename, trait.name, N, ref, hm3, info.filter, maf.filter, column.names, overwrite, output.path, log.file=NULL) {
+.munge_main <- function(i, utilfuncs, file, filename, trait.name, N, ref, hm3,
+                        info.filter, maf.filter, column.names, overwrite, output.path, log.file=NULL) {
   
   # check overwrite
   .check_boolean(overwrite)
@@ -145,10 +146,10 @@ Please note that this is likely effective sample size cut in half. The function 
   # remove spaces in trait.names file to avoid errors with fread functionality used for s_ldsc
   trait.name <- stringr::str_replace_all(trait.name, stringr::fixed(" "), "")
   
-  write.table(x = output, file = paste0(output.path,'/',trait.name,".sumstats"), sep="\t", quote = FALSE, row.names = F)
-  R.utils::gzip(paste0(output.path,'/',trait.name,".sumstats"), overwrite=overwrite)
+  write.table(x = output, file = paste0(output.path,trait.name,".sumstats"), sep="\t", quote = FALSE, row.names = F)
+  R.utils::gzip(paste0(output.path,trait.name,".sumstats"), overwrite=overwrite)
   .LOG("I am done munging file: ", filename, file=log.file)
-  .LOG("The file is saved as ", paste0(output.path,'/',trait.name,".sumstats.gz"), " in the current working directory.", file=log.file)
+  .LOG("The file is saved as ", paste0(output.path,trait.name,".sumstats.gz"), " in the current working directory.", file=log.file)
   
   return()
 }

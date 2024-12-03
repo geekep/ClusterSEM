@@ -13,7 +13,7 @@
 #' @return  The function returns a list with 3 named entries
 #' @return  S	estimated genetic variance/covariance matrix
 #' @return  SE variance matrix of the estimated parameter in S
-#' @return  I  matrix containing the "cross trait intercepts", or the error covariance between traits induced by overlap, in terms of subjects, between the GWAS on which the analyses are based
+#' @return  I matrix containing the "cross trait intercepts", or the error covariance between traits induced by overlap, in terms of subjects, between the GWAS on which the analyses are based
 #' 
 #' @export
 hdl <- function(traits, sample.prev = NA, population.prev = NA, trait.names = NULL,
@@ -64,7 +64,7 @@ hdl <- function(traits, sample.prev = NA, population.prev = NA, trait.names = NU
   V.hold <- matrix(NA, nrow = num.pieces, ncol = n.V)
   complete <- matrix(1, nrow = 1, ncol = n.traits)
 
-
+  
   ##### Start with general utility functions needed for hdl and standard errors
   
   ## Define the likelihood function to be optimized for heritability (h^2):
@@ -75,7 +75,7 @@ hdl <- function(traits, sample.prev = NA, population.prev = NA, trait.names = NU
       lamh2 <- ifelse(lamh2 < lim, lim, lamh2)
       ll <- sum(log(lamh2)) + sum(bstar ^ 2 / (lamh2))
       return(ll)
-    }
+  }
   
   ## Define the likelihood function to be optimized for genetic covariance:
   llfun.gcov.part.2 <- function(param, h11, h22, rho12, M, N1, N2, N0, Nref,
@@ -100,7 +100,7 @@ hdl <- function(traits, sample.prev = NA, population.prev = NA, trait.names = NU
       lam22.1 <- ifelse(lam22.1 < lim, lim, lam22.1)
       ll <- sum(log(lam22.1)) + sum(ustar ^ 2 / (lam22.1))
       return(ll)
-    }
+  }
 
   ##### Begin the loop to compute S and V cell by cell using HDL
   # count for elements in V

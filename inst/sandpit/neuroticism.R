@@ -123,44 +123,63 @@ neuroticism <- ldsc(
 )
 
 require(Matirx)
-# Convert genetic covariance matrix (i.e. S) to correlation matrix
 rownames(neuroticism[["S"]]) <- colnames(neuroticism[["S"]])
-neuroticism.corMatirx <- cov2cor(neuroticism[["S"]])
+rownames(neuroticism[["S_Stand"]]) <- colnames(neuroticism[["S_Stand"]])
+
+require(corpcor)
+# Judge whether neuroticism[["S"]] is positive definite or not
+is.positive.definite(neuroticism[["S"]])
+# Partial Correlations Analysis
+neuroticism[["pcorMatirx"]] <- cor2pcor(neuroticism[["S_Stand"]])
+
+require(psych)
+# KMO test
+KMO(r=cov2cor(neuroticism[["S"]]))
+# KMO(r=neuroticism[["S_Stand"]])
+# Bartlett test
+cortest.bartlett(R=neuroticism[["S_Stand"]])
+
+# Exploratory Factor Analysis (EFA) using PCA and factor axis rotation
+# In the Matrix package, smooth the neuroticism[["S"]] matrix for EFA using the nearPD function.
+# neuroticism[["Ssmooth"]] <- as.matrix((nearPD(neuroticism[["S"]], corr = FALSE))$mat)
+require(stats)
+# In the stats package, run EFA.ml with promax rotation and 2-factors using the factanal function 
+EFA.ml <- factanal(covmat=neuroticism[["S"]], factors=2, rotation="promax")
+EFA.mle <- fa(r=neuroticism[["S"]], fm='mle', nfactors=2, rotate="promax", smooth=FALSE)
+# In the psych package, run EFA.pa with promax rotation and 2-factors using the fa function.
+# By default, improper correlations matrices are smoothed. This is not necessary for factor extraction using fm="pa" or fm="minres", but is needed to give some of the goodness of fit tests.
+EFA.pa <- fa(r=neuroticism[["S"]], fm='pa', nfactors=2, rotate = "promax", smooth = FALSE)
+EFA.minres <- fa(r=neuroticism[["S"]], fm='minres', nfactors=2, rotate="promax", smooth=FALSE)
+
+# Run the`paLDSC` function
+paLDSC(S=neuroticism[["S_Stand"]], V=neuroticism[["V_Stand"]], r=100)
+
+# Exploratory Factor Analysis (EFA) using spectral clustering
+require(kernlab)
+kernelMatrix <- as.kernelMatrix(as.matrix(neuroticism[["S_Stand"]]), center=FALSE)
+sc <- specc(x=kernelMatrix, centers=3, data=NULL, na.action = na.omit)
 
 # Confirm the number of latent variables using hierarchical clustering
 # In stats package, hclust method optional parameter: ward.D, ward.D2, single, complete, average, mcquitty, median, centroid
 require(stats)
-hclustTree <- hclust(d = as.dist((1 - neuroticism.corMatirx) / 2), method = "complete")
+hclustTree <- hclust(d = as.dist((1 - neuroticism[["S_Stand"]]) / 2), method = "complete")
 plot(hclustTree,
      main = "Hierarchical clustering for 12 neuroticism traits",
      xlab = 'Traits',
      ylab = 'Similarity [i.o. (1-Cor_coef)/2]',
      hang = -1)
 
-# Exploratory Factor Analysis (EFA) using PCA and factor axis rotation
-require(Matrix)
-#In the Matrix package, smooth the neuroticism.corMatirx matrix for EFA using the nearPD function. 
-Ssmooth <- as.matrix((nearPD(neuroticism$S, corr = FALSE))$mat)
-require(stats)
-#In the stats package, run EFA with promax rotation and 3 factors using the factanal function 
-EFA <- factanal(covmat = Ssmooth, factors = 3, rotation = "promax")
-
-# Exploratory Factor Analysis (EFA) using spectral clustering
-require(kernlab)
-kernelMatrix <- as.kernelMatrix(as.matrix(neuroticism.corMatirx), center=FALSE)
-sc <- specc(x=kernelMatrix, centers=3, data=NULL, na.action = na.omit)
-
 # In pheatmap package, pheatmap clustering_method parameter is similar to the above stats::hclust method parameter option.
 require(pheatmap)
 pheatmap(
-  neuroticism.corMatirx,
+  neuroticism[["S"]],
   cluster_rows = TRUE,
   cluster_cols = TRUE,
   clustering_distance_rows = "correlation",
   clustering_distance_cols = "correlation",
   clustering_method = "complete",
-  annotation_row = data.frame(Traits = c("F1", "F1", "F1", "F2", "F1", "F3", "F3", "F3", "F2", "F3", "F1", "F2"), row.names = rownames(neuroticism.corMatirx)),
-  annotation_col = data.frame(Traits = c("F1", "F1", "F1", "F2", "F1", "F3", "F3", "F3", "F2", "F3", "F1", "F2"), row.names = colnames(neuroticism.corMatirx)),
+  annotation_row = data.frame(Traits = c("F1", "F1", "F1", "F2", "F1", "F3", "F3", "F3", "F2", "F3", "F1", "F2"), row.names = rownames(neuroticism[["S"]])),
+  annotation_col = data.frame(Traits = c("F1", "F1", "F1", "F2", "F1", "F3", "F3", "F3", "F2", "F3", "F1", "F2"), row.names = colnames(neuroticism[["S"]])),
   main = "Hierarchical clustering and spectral clustering for \n genetic correlation matrix of 12 neuroticism traits",
   fontsize = 8,
   fontsize_row = 6,
@@ -168,15 +187,13 @@ pheatmap(
 )
 
 # Hierarchical Exploratory Factor Analysis (H-EFA) using BIRCH clustering
-neuroticism.CFTree <- BirchCF(x=as.data.frame(neuroticism$S),
-                               Type = 'df',
-                               branchingfactor = 6,
-                               threshold = 0.01)
+neuroticism[["CFTree"]] <- BirchCF(x=as.data.frame(neuroticism[["S"]]),
+                                   Type = 'df', branchingfactor = 6, threshold = 0.01)
 
 # Specify the genomic confirmatory factor model
-neuroticism.CFAofEFA <- 'F1 =~ NA*mood + misery + fedup +lonely + irritability
-                         F2 =~ NA*hurt + guilt + embarass
-                         F3 =~ NA*tense + nerves + nervous + worry'
+neuroticism[["CFAofEFA"]] <- 'F1 =~ NA*mood + misery + fedup +lonely + irritability
+                              F2 =~ NA*hurt + guilt + embarass
+                              F3 =~ NA*tense + nerves + nervous + worry'
 
 # Confirmatory factor analysis (CFA) based on specified the genomic confirmatory factor model
-neuroticism.CFA <- usermodel(neuroticism, estimation = "DWLS", model = neuroticism.CFAofEFA, CFIcalc = TRUE, std.lv = TRUE, imp_cov = TRUE, fix_resid = TRUE, toler = NULL)
+neuroticism[["CFA"]] <- usermodel(neuroticism, estimation = "DWLS", model = neuroticism[["CFAofEFA"]], CFIcalc = TRUE, std.lv = TRUE, imp_cov = TRUE, fix_resid = TRUE, toler = NULL)

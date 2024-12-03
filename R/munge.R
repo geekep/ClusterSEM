@@ -12,22 +12,12 @@
 #' @param parallel default to FALSE
 #' @param cores default to NULL
 #' @param overwrite default to TRUE
-#' @param output.path default to NULL (the current working directory)
+#' @param output.path default to NULL (the current working directory). If you want to specify other output.path, please make output.path string ending with '/'.
 #'
 #' @return The function writes files of the ".sumstats.gz" format, which can be used to estimate SNP heritability and genetic covariance using the ldsc() function. The function will also output a .log file that should be examined to ensure that column names are being interpret correctly.
 #' @export
-munge <- function(files,
-                  hm3,
-                  trait.names = NULL,
-                  N = NULL,
-                  info.filter = .9,
-                  maf.filter = 0.01,
-                  log.name = NULL,
-                  column.names = list(),
-                  parallel = FALSE,
-                  cores = NULL,
-                  overwrite = TRUE,
-                  output.path = NULL) {
+munge <- function(files, hm3, trait.names = NULL, N = NULL, info.filter = .9, maf.filter = 0.01, log.name = NULL,
+                  column.names = list(), parallel = FALSE, cores = NULL, overwrite = TRUE, output.path = NULL) {
   
   # check files
   if (is.list(files)) {
@@ -112,7 +102,7 @@ munge <- function(files,
       int <- length(filenames)
     }
     
-    # Defaulting to PSOCK cluster as it should work on both Linux and Windows and from my experience it's faster when not copying large amounts of data
+    # Defaulting to PSOCK cluster and it's faster when not copying large amounts of data
     cl <- parallel::makeCluster(int, type="PSOCK")
     doParallel::registerDoParallel(cl)
     on.exit(parallel::stopCluster(cl))

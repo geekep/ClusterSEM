@@ -29,6 +29,7 @@ Imports:
     plyr,
     R.utils,
     readr,
+    snowfall,
     stats,
     stringr,
     TwoSampleMR,

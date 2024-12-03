@@ -2,7 +2,7 @@
 % Please edit documentation in R/hdl.R
 \name{hdl}
 \alias{hdl}
-\title{Estimate a genetic covariance matrix using High Definition Likelihood (HDL) based on the work by Ning, Pawitan and Shen, Nature Genetics (2020)}
+\title{Estimate a genetic covariance matrix using High Definition Likelihood (HDL) based on the work by Ning, Pawitan and Shen, Nature Genetics, 2020}
 \usage{
 hdl(
   traits,
@@ -11,7 +11,8 @@ hdl(
   trait.names = NULL,
   LD.path,
   Nref = 335265,
-  method = "piecewise"
+  method = "piecewise",
+  hdl.log = NULL
 )
 }
 \arguments{
@@ -21,25 +22,25 @@ hdl(
 
 \item{population.prev}{A vector of population prevalence for dichotomous traits and NA for continuous traits}
 
-\item{trait.names}{A character vector specifying how the traits should be named in the genetic covariance matrix (i.o. S). These variable names can subsequently be used in later steps for model specification. If no value is provided, the function will automatically name the variables using the generic from of V1-VX.}
+\item{trait.names}{A character vector specifying how the traits should be named in the genetic covariance matrix (i.e., S). These variable names can subsequently be used in later steps for model specification. If no value is provided, the function will automatically name the variables using the generic from of V1-VX.}
 
 \item{LD.path}{String which contains the path to the folder in which the LD matrices used in the analysis are located.}
 
 \item{Nref}{Sample size of the reference file, default is 335265}
 
-\item{method}{String, either "piecewise" which estimates the heritability or genetic covariance locally in chunks across the genome and then sums these estimates, or "jackknife" which uses a genome wide estiamte and uses a jackknife estimator for the variance of the parameter. defaults to "piecewise" the original HDL implementation is equal to "jackknife"}
+\item{method}{Defaults to "piecewise". Either "piecewise" which estimates the heritability or genetic covariance locally in chunks across the genome and then sums these estimates, or "jackknife" which uses a genome-wide estimate and uses a jackknife estimator for the variance of the parameter (the original HDL implementation is equal to "jackknife").}
 }
 \value{
 The function returns a list with 3 named entries
 
-S	estimated genetic covariance matrix
+S	estimated genetic variance/covariance matrix
 
-V	variance covariance matrix of the parameter estimates in S
+SE variance matrix of the estimated parameter in S
 
-I  matrix containing the "cross trait intercepts", or the error covariance between traits induced by overlap, in terms of subjects, between the GWAS on which the analyses are based
+I matrix containing the "cross trait intercepts", or the error covariance between traits induced by overlap, in terms of subjects, between the GWAS on which the analyses are based
 }
 \description{
-Function to run HDL (https://github.com/zhenin/HDL) to compute the genetic covariance between a series of traits based on genome wide summary statistics obtained from GWAS. HDL is more powerful than LDSC but if the LD structure in the reference file mismatches the GWAS LD structure, LDSC seems to perform better, especially for estimates of heritability. For medium samples (N > 50,000) with moderate SNP-h2 (snp h2 > 0.07) where the LD structure isn't similar, we would recommend ldsc, especially for GWAS. If you have small GWAS (N < 25,000), the extra power HDL provides is worth the downward bias in snp h^2 estimates relative to ldsc.
+Function to run HDL (https://github.com/zhenin/HDL) to compute the genetic covariance between a series of traits based on genome-wide summary statistics. HDL is more powerful than LDSC but if the LD structure in the reference file mismatches the LD structure in GWAS and LDSC seems to perform better especially for estimation of heritability. For medium samples (N > 50,000) with moderate snp h^2 (> 0.07) where the LD structure isn't similar, we would recommend ldsc. If you have small GWAS (N < 25,000), the extra statistical power which HDL provides is worth the downward bias in snp h^2 estimation relative to ldsc.
 }
 \references{
 Ning, Z., Pawitan, Y. & Shen, X. High-definition likelihood inference of genetic correlations across human complex traits. Nat Genet (2020).

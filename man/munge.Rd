@@ -42,7 +42,7 @@ munge(
 
 \item{overwrite}{default to TRUE}
 
-\item{output.path}{default to NULL (the current working directory)}
+\item{output.path}{default to NULL (the current working directory). If you want to specify other output.path, please make output.path string ending with '/'.}
 }
 \value{
 The function writes files of the ".sumstats.gz" format, which can be used to estimate SNP heritability and genetic covariance using the ldsc() function. The function will also output a .log file that should be examined to ensure that column names are being interpret correctly.
