@@ -68,7 +68,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
   n.V <- n.traits * (n.traits + 1) / 2
 
   if(n.traits > 18) {
-    n.blocks <- (((n.traits + 1) * (n.traits + 2)) / 2) + 1
+    n.blocks <- ((n.traits + 1) * (n.traits + 2) / 2) + 1
     n.blocks <- min(n.blocks, 1500)
     .LOG("     ", file=log.file, print=FALSE)
     .LOG("Setting the number of blocks used to perform the block jacknife used to estimate the sampling covariance matrix (V) to ", n.blocks, file=log.file)
@@ -257,14 +257,10 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
         .LOG("     ", "     ", file=log.file, print=FALSE)
         .LOG("Estimating heritability [", s <- s + 1, "/", n.V, "] for a trait: ", chi1, file=log.file)
 
-        samp.prev <- sample.prev[j]
-        pop.prev <- population.prev[j]
-
         merged <- y1
-        # ADD INTERCEPT
-        merged$intercept <- 1
-        # merged[SNP, N, Z, A1, wLD, CHR, BP, L2, chi1, intercept]
-        n.snps <- nrow(merged)
+        # merged[SNP, N, Z, A1, wLD, CHR, BP, L2, chi1]
+        
+        N.bar <- N.vec[1,s] <- mean(merged$N)
 
         #### MAKE WEIGHTS for chi1:
         tot.agg <- (M.tot * (mean(merged$chi1) - 1)) / mean(merged$L2 * merged$N)
@@ -278,13 +274,14 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
         merged$w <- merged$het.w * merged$oc.w
         merged$initial.w <- sqrt(merged$w)
         merged$weights <- merged$initial.w / sum(merged$initial.w)
-        # merged[SNP, N, Z, A1, wLD, CHR, BP, L2, chi1, intercept, c, ld, w.ld, het.w, oc.w, w, initial.w, weights]
+        # merged[SNP, N, Z, A1, wLD, CHR, BP, L2, chi1, c, ld, w.ld, het.w, oc.w, w, initial.w, weights]
 
-        ## pre-weight LD:
+        # ADD INTERCEPT
+        merged$intercept <- 1
+        ## pre-weight LD and chi:
         weighted.LD <- as.matrix(cbind(merged$L2, merged$intercept) * merged$weights)
-        # cat("Dimension of matrix weighted.LD:", nrow(weighted.LD), "rows and", ncol(weighted.LD), "cols", '\n')
-        ## pre-weight chi:
         weighted.chi <- as.matrix(merged$chi1 * merged$weights)
+        # cat("Dimension of matrix weighted.LD:", nrow(weighted.LD), "rows and", ncol(weighted.LD), "cols", '\n')
         # cat("Dimension of matrix weighted.chi:", nrow(weighted.chi), "rows and", ncol(weighted.chi), "cols", '\n')
 
         ## Perform analysis:
@@ -292,10 +289,11 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
         xty.block.values <- matrix(data=NA, nrow=n.blocks, ncol=(n.annot+1))
         xtx.block.values <- matrix(data=NA, nrow=((n.annot+1)*n.blocks), ncol=(n.annot+1))
         colnames(xty.block.values) <- colnames(xtx.block.values) <- colnames(weighted.LD)
-        replace.from <- seq(from=1, to=nrow(xtx.block.values), by=(n.annot+1))
-        replace.to <- seq(from=(n.annot+1), to=nrow(xtx.block.values), by=(n.annot+1))
+        n.snps <- nrow(merged)
         select.from <- floor(seq(from=1, to=n.snps, length.out=(n.blocks+1)))
         select.to <- c(select.from[2:n.blocks]-1, n.snps)
+        replace.from <- seq(from=1, to=nrow(xtx.block.values), by=(n.annot+1))
+        replace.to <- seq(from=(n.annot+1), to=nrow(xtx.block.values), by=(n.annot+1))
         for(i in 1:n.blocks) {
           xty.block.values[i,] <- t(t(weighted.LD[select.from[i]:select.to[i],]) %*% weighted.chi[select.from[i]:select.to[i],])
           xtx.block.values[replace.from[i]:replace.to[i],] <- as.matrix(t(weighted.LD[select.from[i]:select.to[i],]) %*% weighted.LD[select.from[i]:select.to[i],])
@@ -306,11 +304,9 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
         for(i in 1:nrow(xtx)) {
           xtx[i,] <- t(colSums(xtx.block.values[seq(from=i, to=nrow(xtx.block.values), by=ncol(weighted.LD)),]))
         }
-
-        N.vec[1,s] <- N.bar <- mean(merged$N)
         reg <- solve(xtx, xty)
-        cov[j,k] <- reg.tot <- reg[1] / N.bar * m
-        I[j,k] <- intercept <- reg[2]
+        reg.tot <- cov[j,k] <- reg[1] / N.bar * m
+        intercept <- I[j,k] <- reg[2]
 
         delete.from <- seq(from=1, to=nrow(xtx.block.values), by=ncol(xtx.block.values))
         delete.to <- seq(from=ncol(xtx.block.values), to=nrow(xtx.block.values), by=ncol(xtx.block.values))
@@ -334,9 +330,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
         intercept.se <- jackknife.se[length(jackknife.se)]
         coef.cov <- jackknife.cov[1:n.annot, 1:n.annot] / (N.bar^2)
         cat.cov <- coef.cov * (m %*% t(m))
-        tot.cov <- sum(cat.cov)
-        tot.se <- sqrt(tot.cov)
-        SE[j,k] <- tot.se
+        tot.se <- SE[j,k] <- sqrt(sum(cat.cov))
 
         mean.Chi <- mean(merged$chi1)
         lambda.gc <- median(merged$chi1) / qchisq(0.5, df = 1)
@@ -351,6 +345,8 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
         .LOG("Total Observed Scale h2: ", round(reg.tot, 4), " (", round(tot.se, 4), ")", file=log.file)
         .LOG("h2 Z: ", format(reg.tot / tot.se, digits = 3), file=log.file)
         
+        pop.prev <- population.prev[j]
+        samp.prev <- sample.prev[j]
         if(is.na(pop.prev) == F & is.na(samp.prev) == F) {
           Liab.S[j] <- conversion.factor <- (pop.prev^2 * (1-pop.prev)^2) / (samp.prev * (1-samp.prev) * dnorm(qnorm(1-pop.prev))^2)
           .LOG("     ", file=log.file, print=FALSE)
@@ -375,17 +371,15 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
         # y2[SNP, N, Z, A1, wLD, CHR, BP, L2]
         # y1[SNP, N, Z, A1, wLD, CHR, BP, L2, chi1]
         y <- merge(y1, y2[, c("SNP", "N", "Z", "A1")], by = "SNP", sort = FALSE)
-
         y$Z.x <- ifelse(y$A1.y == y$A1.x, y$Z.x, -y$Z.x)
         y$ZZ <- y$Z.y * y$Z.x
         y$chi2 <- y$Z.y^2
         merged <- na.omit(y)
-        # ADD INTERCEPT
-        merged$intercept <- 1
-        # merged[SNP, N.x, Z.x, A1.x, wLD, CHR, BP, L2, chi1, N.y, Z.y, A1.y, ZZ, chi2, intercept]
-        n.snps <- nrow(merged)
-        .LOG(n.snps, " SNPs remain after merging ", chi1, " and ", chi2, " summary statistics", file=log.file)
-
+        # merged[SNP, N.x, Z.x, A1.x, wLD, CHR, BP, L2, chi1, N.y, Z.y, A1.y, ZZ, chi2]
+        .LOG(nrow(merged), " SNPs remain after merging ", chi1, " and ", chi2, " summary statistics", file=log.file)
+        
+        N.bar <- N.vec[1,s] <- sqrt(mean(merged$N.x) * mean(merged$N.y))
+        
         #### MAKE WEIGHTS for chi1:
         tot.agg <- (M.tot * (mean(merged$chi1) - 1)) / mean(merged$L2 * merged$N.x)
         tot.agg <- max(tot.agg, 0)
@@ -410,36 +404,37 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
         merged$w2 <- merged$het.w2 * merged$oc.w2
         merged$initial.w2 <- sqrt(merged$w2)
         merged$weights_cov <- (merged$initial.w + merged$initial.w2) / sum(merged$initial.w + merged$initial.w2)
-        # merged[SNP, N.x, Z.x, A1.x, wLD, CHR, BP, L2, chi1, N.y, Z.y, A1.y, ZZ, chi2, intercept, c, ld, het.w, w.ld, oc.w, w, initial.w, c2, ld2, het.w2, w.ld2, oc.w2, w2, initial.w2, weights_cov]
+        # merged[SNP, N.x, Z.x, A1.x, wLD, CHR, BP, L2, chi1, N.y, Z.y, A1.y, ZZ, chi2, c, ld, het.w, w.ld, oc.w, w, initial.w, c2, ld2, het.w2, w.ld2, oc.w2, w2, initial.w2, weights_cov]
 
+        # ADD INTERCEPT
+        merged$intercept <- 1
         ## pre-weight LD and chi:
-        weighted.LD <- as.matrix(cbind(merged$L2, merged$intercept) * merged$weights)
+        weighted.LD <- as.matrix(cbind(merged$L2, merged$intercept) * merged$weights_cov)
         weighted.chi <- as.matrix(merged$ZZ * merged$weights_cov)
 
         ## Perform analysis:
         n.annot <- 1
-        xty.block.values <- matrix(data=NA, nrow=n.blocks, ncol =(n.annot+1))
-        xtx.block.values <- matrix(data=NA, nrow =((n.annot+1)* n.blocks), ncol =(n.annot+1))
+        xty.block.values <- matrix(data=NA, nrow=n.blocks, ncol=(n.annot+1))
+        xtx.block.values <- matrix(data=NA, nrow=((n.annot+1)*n.blocks), ncol=(n.annot+1))
         colnames(xty.block.values) <- colnames(xtx.block.values) <- colnames(weighted.LD)
+        n.snps <- nrow(merged)
+        select.from <- floor(seq(from=1, to=n.snps, length.out=(n.blocks+1)))
+        select.to <- c(select.from[2:n.blocks]-1, n.snps)
         replace.from <- seq(from=1, to=nrow(xtx.block.values), by=(n.annot+1))
         replace.to <- seq(from=(n.annot+1), to=nrow(xtx.block.values), by=(n.annot+1))
-        select.from <- floor(seq(from=1, to=n.snps, length.out =(n.blocks+1)))
-        select.to <- c(select.from[2:n.blocks]-1, n.snps)
         for(i in 1:n.blocks) {
           xty.block.values[i,] <- t(t(weighted.LD[select.from[i]:select.to[i],]) %*% weighted.chi[select.from[i]:select.to[i],])
           xtx.block.values[replace.from[i]:replace.to[i],] <- as.matrix(t(weighted.LD[select.from[i]:select.to[i],]) %*% weighted.LD[select.from[i]:select.to[i],])
         }
         xty <- as.matrix(colSums(xty.block.values))
-        xtx <- matrix(data=NA, nrow =(n.annot+1), ncol =(n.annot+1))
+        xtx <- matrix(data=NA, nrow=(n.annot+1), ncol=(n.annot+1))
         colnames(xtx) <- colnames(weighted.LD)
         for(i in 1:nrow(xtx)) {
           xtx[i,] <- t(colSums(xtx.block.values[seq(from=i, to=nrow(xtx.block.values), by=ncol(weighted.LD)),]))
         }
-
-        N.vec[1,s] <- N.bar <- sqrt(mean(merged$N.x) * mean(merged$N.y))
         reg <- solve(xtx, xty)
-        cov[k,j] <- cov[j,k] <- reg.tot <- reg[1] / N.bar * m
-        I[k,j] <- I[j,k] <- intercept <- reg[2]
+        reg.tot <- cov[k,j] <- cov[j,k] <- reg[1] / N.bar * m
+        intercept <- I[k,j] <- I[j,k] <- reg[2]
 
         delete.from <- seq(from=1, to=nrow(xtx.block.values), by=ncol(xtx.block.values))
         delete.to <- seq(from=ncol(xtx.block.values), to=nrow(xtx.block.values), by=ncol(xtx.block.values))
@@ -463,9 +458,7 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
         intercept.se <- jackknife.se[length(jackknife.se)]
         coef.cov <- jackknife.cov[1:n.annot, 1:n.annot] / (N.bar ^ 2)
         cat.cov <- coef.cov * (m %*% t(m))
-        tot.cov <- sum(cat.cov)
-        tot.se <- sqrt(tot.cov)
-        SE[k,j] <- SE[j,k] <- tot.se
+        SE[k,j] <- SE[j,k] <- sqrt(sum(cat.cov))
 
         .LOG("Results for genetic covariance between: ", chi1, " and ", chi2, file=log.file)
         .LOG("Mean Z*Z: ", round(mean(merged$ZZ), 4), file=log.file)
@@ -475,10 +468,9 @@ ldsc <- function(traits, sample.prev, population.prev, ld, wld,
         .LOG("g_cov P-value: ", format(2 * pnorm(abs(reg.tot / tot.se), lower.tail = FALSE), digits = 5), file=log.file)
       }
       ##### GENETIC COVARIANCE code end
-
     }
   }
-
+  
   ### Scale S to liability:
   ratio <- tcrossprod(sqrt(Liab.S))
   S <- cov * ratio

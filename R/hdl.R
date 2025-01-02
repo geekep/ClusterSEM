@@ -14,7 +14,7 @@
 #' @return  S	estimated genetic variance/covariance matrix
 #' @return  SE variance matrix of the estimated parameter in S
 #' @return  I matrix containing the "cross trait intercepts", or the error covariance between traits induced by overlap, in terms of subjects, between the GWAS on which the analyses are based
-#' 
+#'
 #' @export
 hdl <- function(traits, sample.prev = NA, population.prev = NA, trait.names = NULL,
                 LD.path, Nref = 335265, method = "piecewise", hdl.log = NULL) {
@@ -451,7 +451,6 @@ hdl <- function(traits, sample.prev = NA, population.prev = NA, trait.names = NU
   for (z in 1:n.traits) {
     pop.prev <- population.prev[z]
     samp.prev <- sample.prev[z]
-    
     if (is.na(pop.prev) == F & is.na(samp.prev) == F) {
       conversion.factor <- (pop.prev^2 * (1-pop.prev)^2) / (samp.prev*(1-samp.prev) * dnorm(qnorm(1-pop.prev))^2)
       Liab.S[, z] <- conversion.factor

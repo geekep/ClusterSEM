@@ -122,6 +122,23 @@ neuroticism <- ldsc(
   chisq.max = NA
 )
 
+neuroticism <- ldsc(
+  traits =c("~/R-workspace/UKBB_GWAS_Imputed_v3/mood.sumstats.gz",
+            "~/R-workspace/UKBB_GWAS_Imputed_v3/hurt.sumstats.gz"),
+  ld = "~/R-workspace/eur_w_ld_chr",
+  wld = "~/R-workspace/eur_w_ld_chr",
+  sample.prev = c(.451,.556),
+  population.prev = c(.451, .556),
+  trait.names = c("mood", "hurt"),
+  sep_weights = FALSE,
+  chr = 22,
+  n.blocks = 200,
+  ldsc.log = 'neuroticism',
+  stand = TRUE,
+  select = c(1, 3),
+  chisq.max = NA
+)
+
 require(Matirx)
 rownames(neuroticism[["S"]]) <- colnames(neuroticism[["S"]])
 rownames(neuroticism[["S_Stand"]]) <- colnames(neuroticism[["S_Stand"]])
